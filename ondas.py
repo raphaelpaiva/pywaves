@@ -20,18 +20,19 @@ def generate_static_data():
 
 def main():
   baseline_data, mod_data, result_data = generate_static_data()
+  fig = plt.figure()
 
-  plt.subplot(211)
-  baseline = plt.plot(t, baseline_data)
-  gainline = plt.plot(t, mod_data)
+  base_graph = fig.add_subplot(211)
 
-  plt.subplot(212)
-  resultline = plt.plot(t, result_data)
+  baseline = base_graph.plot(t, baseline_data)
+  gainline = base_graph.plot(t, mod_data)
+
+  result_graph = fig.add_subplot(212)
+  resultline = result_graph.plot(t, result_data)
 
   plt.setp(gainline, color='g')
-  plt.setp(resultline, color='r', linewidth=2.0)
+  plt.setp(resultline, color='r')
 
-  plt.ylabel('Sen')
   plt.show()
 
 if __name__ == "__main__":
