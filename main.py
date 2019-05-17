@@ -18,4 +18,5 @@ signals = [
   Sinusoid(frequency, phase=lambda t: 2*t)
 ]
 
-visualize(signals)
+frame_rate = visualize(signals)
+print(f"fps: {frame_rate}")

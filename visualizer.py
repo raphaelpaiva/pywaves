@@ -49,9 +49,11 @@ def visualize(signals, config=default_config):
       frame_count += 1
       sample_frame_number += read_size
     except TclError:
-      frame_rate = frame_count / (time.time() - start_time)
-      print(f"fps: {frame_rate}")
       break
+    finally:
+      frame_rate = frame_count / (time.time() - start_time)
+  
+  return frame_rate
 
 def update_plots(signals, lines, axes, duration, sample_rate, sample_frame_number):
   for i in range(len(signals)):
