@@ -16,7 +16,7 @@ class Sinusoid(object):
   def sample(self, duration, sample_rate, start_time=0.0):
     t = np.arange(start_time, start_time + duration, 1/sample_rate)
     w = 2 * np.pi * self.frequency * t
-    rho = self.phase * t
+    rho = self.phase(t) if callable(self.phase) else self.phase
     samples = self.amplitude * self.func(w + rho)
     
     return samples, t
