@@ -12,6 +12,10 @@ duration    = read_size / sample_rate # Seconds
 
 t = np.arange(0.0, duration, 1.0/sample_rate)
 
-signal = Sinusoid(frequency, phase=lambda t: 2*t)
+signals = [
+  Sinusoid(frequency),
+  Sinusoid(frequency, phase=lambda t: t),
+  Sinusoid(frequency, phase=lambda t: 2*t)
+]
 
-visualize(signal)
+visualize(signals)
