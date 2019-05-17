@@ -33,9 +33,9 @@ def visualize(signals, config=default_config):
     line, = ax.plot(t, np.random.rand(read_size), '-', lw=2)
     lines.append(line)
     ax.set_ylim(-1,1)
+    ax.set_xlim(0, duration)
 
   plt.show(block=False)
-
   frame_count = 0
   start_time = time.time()
   sample_frame_number = 0
@@ -57,8 +57,6 @@ def update_plots(signals, lines, axes, duration, sample_rate, sample_frame_numbe
   for i in range(len(signals)):
     signal = signals[i]
     line = lines[i]
-    ax = axes[i]
     
     sample, t = signal.sample(duration, sample_rate, start_time=sample_frame_number)
-    line.set_data(t, sample)
-    ax.set_xlim(sample_frame_number, duration + sample_frame_number)
+    line.set_data(t - sample_frame_number, sample)
