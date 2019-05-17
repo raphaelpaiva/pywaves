@@ -13,8 +13,10 @@ class Sinusoid(object):
   def __str__(self):
     return f"{self.amplitude} * {self.func.__name__}(2 * PI * {self.frequency} + {self.phase})"
   
-  def sample(self, duration, sample_rate):
-    t = np.arange(0.0, duration, 1/sample_rate)
+  def sample(self, duration, sample_rate, start_time=0.0):
+    t = np.arange(start_time, start_time + duration, 1/sample_rate)
     w = 2 * np.pi * self.frequency * t
-    samples = self.amplitude * self.func(w + self.phase)
-    return samples
+    rho = self.phase * t
+    samples = self.amplitude * self.func(w + rho)
+    
+    return samples, t
