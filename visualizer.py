@@ -34,6 +34,8 @@ def visualize(signals, config=default_config):
     lines.append(line)
     ax.set_ylim(-1,1)
     ax.set_xlim(0, duration)
+    ax.set_xticks([])
+    ax.set_yticks([])
 
   plt.show(block=False)
   frame_count = 0
