@@ -15,3 +15,6 @@ class Oscilator(object):
   def set_volume(self, vol):
     self.volume         = float(vol)
     self.wave.amplitude = self.volume
+
+  def set_phase(self, phase):
+    self.wave.phase = float(phase)

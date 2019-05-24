@@ -120,18 +120,41 @@ class Window(Frame):
         length=400
       ).grid(row=1, column=1)
 
+      phase_tracker = tkinter.DoubleVar()
+      phase_tracker.set(float(osc.wave.phase))
+
+      Label(
+        osc_frame,
+        text="Phase"
+      ).grid(row=3, column=0, sticky=tkinter.W)
+
+      Label(
+        osc_frame,
+        textvariable=phase_tracker
+      ).grid(row=2, column=1)
+      
+      Scale(
+        osc_frame,
+        variable=phase_tracker,
+        from_=0,
+        to=12.566370614359172953850573533118, # 4 * PI Lazy
+        orient=tkinter.HORIZONTAL,
+        command=osc.set_phase,
+        length=100
+      ).grid(row=3, column=1, sticky=tkinter.W)
+
       vol_tracker = tkinter.DoubleVar()
       vol_tracker.set(float(osc.volume))
 
       Label(
         osc_frame,
         text="Volume"
-      ).grid(row=3, column=0)
+      ).grid(row=5, column=0, sticky=tkinter.W)
 
       Label(
         osc_frame,
         textvariable=vol_tracker
-      ).grid(row=2, column=1)
+      ).grid(row=4, column=1)
 
       Scale(
         osc_frame,
@@ -140,7 +163,7 @@ class Window(Frame):
         to=1.0,
         orient=tkinter.HORIZONTAL,
         command=osc.set_volume,
-      ).grid(row=3, column=1, sticky=tkinter.W)
+      ).grid(row=5, column=1, sticky=tkinter.W)
 
       osc_frames.append(osc_frame)
     
