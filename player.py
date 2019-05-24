@@ -37,7 +37,7 @@ def play_sinusoid(signal, config=default_config):
 class Player(object):
   def __init__(self, channels=1, sample_size=1024, sample_rate=44100, audio_format=pyaudio.paFloat32, volume=0.5):
     self.channels = channels
-    self.read_size = sample_size
+    self.sample_size = sample_size
     self.sample_rate = sample_rate
     self.format = audio_format
     self.volume = volume
