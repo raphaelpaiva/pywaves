@@ -7,8 +7,8 @@ class Sinusoid(object):
   def __init__(self, frequency=440, phase=0, amplitude=1.0, func=np.sin):
     self.amplitude = amplitude
     self.frequency = frequency
-    self.phase = phase
-    self.func = func
+    self.phase     = phase
+    self.func      = func
 
   def sample(self, duration, sample_rate, start_time=0.0):
     t = np.arange(start_time, start_time + duration, 1/sample_rate)
