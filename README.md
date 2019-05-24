@@ -3,6 +3,12 @@ Random studying of Digital Signal Processing
 
 Some experiments with DSP generating, analyzing and combining soundwaves.
 
+pyAudio is a requirement, thus, unless you have it installed in your python 3.7, this project requires python 3.6-
+
+```bash
+$ python interface.py
+```
+
 Main goals are:
   * To learn :)
   * To have fun :D
