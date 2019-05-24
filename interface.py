@@ -25,26 +25,46 @@ class Window(Frame):
 
   def _create_window(self):
     self.master.title("JustASynth")
+    
     frequencyTracker = tkinter.IntVar()
     frequencyTracker.set(self.sinusoid.frequency)
 
-    scale = Scale(
+    freq_scale = Scale(
       self,
       variable=frequencyTracker,
       label="Frequency",
-      from_=100,
-      to=880,
+      from_=20,
+      to=5000,
       orient=tkinter.HORIZONTAL,
-      command=self._setFrequency
+      command=self._setFrequency,
+      length=400
     )
     
-    scale.grid(row=0, column=0)
+    freq_scale.grid(row=0, column=0)
 
-    self.grid()
+    volTracker = tkinter.DoubleVar()
+    volTracker.set(self.player.volume)
+
+    vol_scale = Scale(
+      self,
+      variable=volTracker,
+      label="Volume",
+      from_=1.0,
+      to=0.0,
+      command=self._setVolume,
+      resolution=0.01
+    )
+    
+    vol_scale.grid(row=1, column=1)
+
+    self.pack()
   
   def _setFrequency(self, freq):
     self.sinusoid.frequency = int(freq)
 
+  def _setVolume(self, volume):
+    self.player.volume = float(volume)
+  
   def _continuous_play(self):
     t = 0
     while not self.stop:
@@ -67,7 +87,7 @@ class Window(Frame):
 def main():
   root = tkinter.Tk()
 
-  root.geometry("400x300")
+  root.geometry("600x300")
 
   app = Window(root)
   
