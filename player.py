@@ -24,14 +24,33 @@ class Player(object):
 
     return stream
 
+  def mix(self, samples):
+    if not samples:
+      return []
+    
+    normalized_samples = numpy.zeros(self.sample_size)
+    
+    for sample in samples:
+      work_sample = sample
+      if len(sample) > self.sample_size:
+        work_sample = sample[0:self.sample_size] # Hard cut
+      
+      norm_sample = self.normalize(work_sample)
+      normalized_samples = normalized_samples + norm_sample
+    
+    return normalized_samples
+
   def play_sample(self, sample):
-    normalized = numpy.interp(  # Normalize the sample to range(0, 1)
-      sample,
-      (-1, 1),                  # Original range from Sinewave
-      (0, self.volume)          # Target Range: 0 to Volume factor (1 is max)
-    ).astype(numpy.float32)
+    normalized = self.normalize(sample)
     
     self.stream.write(normalized.tostring())
+
+  def normalize(self, sample):
+    return numpy.interp(  # Normalize the sample to range(0, 1)
+      sample,
+      (-1, 1),            # Original range from Sinewave
+      (0, self.volume)    # Target Range: 0 to Volume factor (1 is max)
+    ).astype(numpy.float32)
 
   def terminate(self):
     self.stream.close()
