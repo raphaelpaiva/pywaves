@@ -20,7 +20,11 @@ class Window(Frame):
     self.master = master
     self.stop   = False
     
-    self.oscilators    = [Oscilator(name="OSC1", wave=Sinusoid()), Oscilator(name="OSC2", wave=Sinusoid())]
+    self.oscilators    = [
+      Oscilator(name="OSC1", wave=Sinusoid()),
+      Oscilator(name="OSC2", wave=Sinusoid(frequency=880.0))
+    ]
+    
     self.player        = Player()
     self.player_thread = threading.Thread(target=self._continuous_play)
     
@@ -35,8 +39,53 @@ class Window(Frame):
     for frame in osc_frames:
       frame.grid()
 
+    master_frame = self._create_master()
+    master_frame.grid(row=0, column=1)
+    
     self.grid()
   
+  def _create_master(self):
+    master_frame = LabelFrame(
+      self,
+      text="Master",
+      relief=tkinter.GROOVE,
+      borderwidth=5
+    )
+
+    Label(
+      master_frame,
+      text="Volume"
+    ).grid()
+
+    vol_tracker = tkinter.DoubleVar()
+    vol_tracker.set(self.player.volume)
+
+    Scale(
+      master_frame,
+      variable=vol_tracker,
+      from_=1.0,
+      to=0.0,
+      orient=tkinter.VERTICAL,
+      command=self.player.set_volume,
+    ).grid()
+
+    Label(
+      master_frame,
+      text=f"Channels: {self.player.channels}"
+    ).grid(sticky=tkinter.W)
+
+    Label(
+      master_frame,
+      text=f"Sample Size: {self.player.sample_size}"
+    ).grid(sticky=tkinter.W)
+
+    Label(
+      master_frame,
+      text=f"Sample Rate: {self.player.sample_rate}Hz"
+    ).grid(sticky=tkinter.W)
+
+    return master_frame
+
   def _create_osc(self):
     osc_frames = []
     
@@ -97,7 +146,6 @@ class Window(Frame):
     
     return osc_frames
 
-  
   def _continuous_play(self):
     t = 0
     while not self.stop:

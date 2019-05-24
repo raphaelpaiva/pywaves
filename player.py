@@ -52,6 +52,9 @@ class Player(object):
       (0, self.volume)    # Target Range: 0 to Volume factor (1 is max)
     ).astype(numpy.float32)
 
+  def set_volume(self, vol):
+    self.volume = float(vol)
+
   def terminate(self):
     self.stream.close()
     self.pyaudio.terminate()
