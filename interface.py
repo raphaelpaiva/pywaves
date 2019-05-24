@@ -3,20 +3,22 @@ import tkinter
 
 from tkinter import Frame
 from tkinter import Label
+from tkinter import LabelFrame
 from tkinter import Scale
 from tkinter import Button
 
 from sinusoud import Sinusoid
+from oscilator import Oscilator
 from player import Player
 
 class Window(Frame):
   def __init__(self, master=None):
-    Frame.__init__(self, master)
+    Frame.__init__(self, master, padx=10, pady=5)
     self.master = master
-    self.stop = False
+    self.stop   = False
     
-    self.sinusoid = Sinusoid()
-    self.player = Player()
+    self.oscilator     = Oscilator()
+    self.player        = Player()
     self.player_thread = threading.Thread(target=self._continuous_play)
     
     self._create_window()
@@ -26,53 +28,60 @@ class Window(Frame):
   def _create_window(self):
     self.master.title("JustASynth")
     
-    frequencyTracker = tkinter.IntVar()
-    frequencyTracker.set(self.sinusoid.frequency)
+    osc_frame = self._create_osc(self.oscilator)
+    osc_frame.grid()
 
-    freq_scale = Scale(
+    self.grid()
+  
+  def _create_osc(self, osc):
+    osc_frame = LabelFrame(
       self,
-      variable=frequencyTracker,
+      text=osc.name,
+      relief=tkinter.GROOVE,
+      borderwidth=5
+    )
+
+    
+    freq_tracker = tkinter.IntVar()
+    freq_tracker.set(osc.wave.frequency)
+
+    Scale(
+      osc_frame,
+      variable=freq_tracker,
       label="Frequency",
       from_=20,
       to=5000,
       orient=tkinter.HORIZONTAL,
-      command=self._setFrequency,
+      command=osc.set_frequency,
       length=400
-    )
-    
-    freq_scale.grid(row=0, column=0)
+    ).grid(row=0, column=0)
 
-    volTracker = tkinter.DoubleVar()
-    volTracker.set(self.player.volume)
+    vol_tracker = tkinter.DoubleVar()
+    vol_tracker.set(self.player.volume)
 
-    vol_scale = Scale(
-      self,
-      variable=volTracker,
+    Scale(
+      osc_frame,
+      variable=vol_tracker,
       label="Volume",
-      from_=1.0,
-      to=0.0,
-      command=self._setVolume,
+      from_=0.0,
+      to=1.0,
+      orient=tkinter.HORIZONTAL,
+      command=osc.set_volume,
       resolution=0.01
-    )
-    
-    vol_scale.grid(row=1, column=1)
+    ).grid(row=1, column=0, sticky=tkinter.W)
 
-    self.pack()
-  
-  def _setFrequency(self, freq):
-    self.sinusoid.frequency = int(freq)
+    return osc_frame
 
-  def _setVolume(self, volume):
-    self.player.volume = float(volume)
   
   def _continuous_play(self):
     t = 0
     while not self.stop:
       sample_size = self.player.sample_size
       sample_rate = self.player.sample_rate
-      duration = sample_size / sample_rate
+      duration    = sample_size / sample_rate
+      time        = t * duration
       
-      sample, _ = self.sinusoid.sample(duration, sample_rate, start_time=t * duration)
+      sample, _ = self.oscilator.wave.sample(duration, sample_rate, start_time=time)
 
       self.player.play_sample(sample)
 
@@ -87,7 +96,7 @@ class Window(Frame):
 def main():
   root = tkinter.Tk()
 
-  root.geometry("600x300")
+  root.geometry("")
 
   app = Window(root)
   
