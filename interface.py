@@ -1,11 +1,16 @@
 import threading
 import tkinter
+import numpy as np
+
+from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
+from matplotlib.figure import Figure
 
 from tkinter.ttk import Frame
 from tkinter.ttk import Label
 from tkinter.ttk import LabelFrame
 from tkinter.ttk import Scale
 from tkinter.ttk import Button
+from tkinter import TclError
 
 from sinusoud import Sinusoid
 from oscilator import Oscilator
@@ -19,31 +24,44 @@ class Window(Frame):
     )
     self.master = master
     self.stop   = False
-    
+
     self.oscilators    = [
       Oscilator(name="OSC1", wave=Sinusoid()),
       Oscilator(name="OSC2", wave=Sinusoid(frequency=880.0))
     ]
-    
+
+    self.lines = {}
+    self.canvas = {}
+    self.axes = {}
+
+    for osc in self.oscilators:
+      self.lines[osc] = None
+      self.canvas[osc] = None
+      self.axes[osc] = None
+
+    self.lines["master"] = None
+    self.canvas["master"] = None
+    self.axes["master"] = None
+
     self.player        = Player()
     self.player_thread = threading.Thread(target=self._continuous_play)
-    
+
     self._create_window()
-    
+
     self.player_thread.start()
 
   def _create_window(self):
     self.master.title("JustASynth")
-    
+
     osc_frames = self._create_osc()
     for frame in osc_frames:
       frame.grid()
 
     master_frame = self._create_master()
     master_frame.grid(row=0, column=1)
-    
+
     self.grid()
-  
+
   def _create_master(self):
     master_frame = LabelFrame(
       self,
@@ -84,11 +102,13 @@ class Window(Frame):
       text=f"Sample Rate: {self.player.sample_rate}Hz"
     ).grid(sticky=tkinter.W)
 
+    self._create_graph_frame("master", master_frame).grid()
+
     return master_frame
 
   def _create_osc(self):
     osc_frames = []
-    
+
     for osc in self.oscilators:
       osc_frame = LabelFrame(
         self,
@@ -96,7 +116,7 @@ class Window(Frame):
         relief=tkinter.GROOVE,
         borderwidth=5
       )
-      
+
       freq_tracker = tkinter.DoubleVar()
       freq_tracker.set(float(osc.wave.frequency))
 
@@ -109,7 +129,7 @@ class Window(Frame):
         osc_frame,
         textvariable=freq_tracker
       ).grid(row=0, column=1)
-      
+
       Scale(
         osc_frame,
         variable=freq_tracker,
@@ -132,7 +152,7 @@ class Window(Frame):
         osc_frame,
         textvariable=phase_tracker
       ).grid(row=2, column=1)
-      
+
       Scale(
         osc_frame,
         variable=phase_tracker,
@@ -165,9 +185,43 @@ class Window(Frame):
         command=osc.set_volume,
       ).grid(row=5, column=1, sticky=tkinter.W)
 
+      graph_frame = self._create_graph_frame(osc, osc_frame)
+
+      graph_frame.grid(row=6, column=0)
+
       osc_frames.append(osc_frame)
-    
+
     return osc_frames
+
+  def _create_graph_frame(self, osc, master_widget):
+    graph_frame = LabelFrame(
+        master_widget,
+        text="Graph",
+        relief=tkinter.GROOVE,
+        borderwidth=5
+      )
+
+    fig = Figure((2,1))
+
+    ax = fig.add_subplot(111)
+    self.axes[osc] = ax
+
+    line, = ax.plot(0)
+
+    ax.set_xlim((0, 1/self.player.sample_rate))
+    ax.set_ylim((-1, 1))
+    ax.set_xticks([])
+    ax.set_yticks([])
+
+    self.lines[osc] = line
+
+    canvas = FigureCanvasTkAgg(fig, master=graph_frame)
+    canvas.draw()
+    canvas.get_tk_widget().grid()
+
+    self.canvas[osc] = canvas
+
+    return graph_frame
 
   def _continuous_play(self):
     t = 0
@@ -176,18 +230,32 @@ class Window(Frame):
       sample_rate = self.player.sample_rate
       duration    = sample_size / sample_rate
       time        = t * duration
-      
+
       samples = []
 
       for osc in self.oscilators:
-        sample, _ = osc.wave.sample(duration, sample_rate, start_time=time)
+        sample, time_axis = osc.wave.sample(duration, sample_rate, start_time=time)
         samples.append(sample)
 
-      master = self.player.mix(samples)
+        self.lines[osc].set_data(time_axis, sample)
+        self.axes[osc].set_xlim((time, time + duration))
+
+      master, sample_time = self.player.mix(samples)
+
+      self.lines["master"].set_data(sample_time, master)
+      self.axes["master"].set_xlim((0, len(sample_time)))
 
       self.player.play_sample(master)
 
       t += 1
+
+  def update_canvas(self):
+    if not self.stop:
+      for canvas in self.canvas.values():
+        canvas.draw()
+        canvas.flush_events()
+
+      self.after(0, self.update_canvas)
 
   def terminate(self):
     self.stop = True
@@ -201,7 +269,8 @@ def main():
   root.geometry("")
 
   app = Window(root)
-  
+  app.after(0, app.update_canvas)
+
   root.mainloop()
 
   app.terminate()

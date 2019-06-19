@@ -27,22 +27,22 @@ class Player(object):
   def mix(self, samples):
     if not samples:
       return []
-    
+
     normalized_samples = numpy.zeros(self.sample_size)
-    
+
     for sample in samples:
       work_sample = sample
       if len(sample) > self.sample_size:
         work_sample = sample[0:self.sample_size] # Hard cut
-      
+
       norm_sample = self.normalize(work_sample)
       normalized_samples = normalized_samples + norm_sample
-    
-    return normalized_samples
+
+    return normalized_samples, numpy.arange(len(normalized_samples))
 
   def play_sample(self, sample):
     normalized = self.normalize(sample)
-    
+
     self.stream.write(normalized.tostring())
 
   def normalize(self, sample):
