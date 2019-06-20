@@ -102,7 +102,7 @@ class Window(Frame):
       text=f"Sample Rate: {self.player.sample_rate}Hz"
     ).grid(sticky=tkinter.W)
 
-    self._create_graph_frame("master", master_frame).grid()
+    self._create_graph_frame("master", master_frame, ylim=(0,1)).grid()
 
     return master_frame
 
@@ -193,7 +193,7 @@ class Window(Frame):
 
     return osc_frames
 
-  def _create_graph_frame(self, osc, master_widget):
+  def _create_graph_frame(self, osc, master_widget, ylim=(-1,1)):
     graph_frame = LabelFrame(
         master_widget,
         text="Graph",
@@ -209,7 +209,7 @@ class Window(Frame):
     line, = ax.plot(0)
 
     ax.set_xlim((0, 1/self.player.sample_rate))
-    ax.set_ylim((-1, 1))
+    ax.set_ylim(ylim)
     ax.set_xticks([])
     ax.set_yticks([])
 
