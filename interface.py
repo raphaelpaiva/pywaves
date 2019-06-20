@@ -12,7 +12,7 @@ from tkinter.ttk import Scale
 from tkinter.ttk import Button
 from tkinter import TclError
 
-from sinusoud import Sinusoid
+from sinusoud import Sinusoid, Triangle
 from oscilator import Oscilator
 from player import Player
 
@@ -26,8 +26,9 @@ class Window(Frame):
     self.stop   = False
 
     self.oscilators    = [
-      Oscilator(name="OSC1", wave=Sinusoid()),
-      Oscilator(name="OSC2", wave=Sinusoid(frequency=880.0))
+      Oscilator(name="SINUSOID", wave=Triangle(frequency=303.04429, width=1)),
+      Oscilator(name="TRIANGLE", wave=Triangle(frequency=303.18527, width=0.5)),
+      Oscilator(name="TRIANGLE", wave=Triangle(frequency=303.03481, width=0))
     ]
 
     self.lines = {}
@@ -252,8 +253,11 @@ class Window(Frame):
   def update_canvas(self):
     if not self.stop:
       for canvas in self.canvas.values():
-        canvas.draw()
-        canvas.flush_events()
+        try:
+          canvas.draw()
+          canvas.flush_events()
+        except TclError:
+          break
 
       self.after(0, self.update_canvas)
 
