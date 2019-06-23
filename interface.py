@@ -42,7 +42,6 @@ class Window(Frame):
 
     self._create_window()
 
-
   def _create_window(self):
     self.master.title("JustASynth")
 
