@@ -1,4 +1,5 @@
 import threading
+import input
 
 from interface import TkInterface
 
@@ -31,7 +32,7 @@ class App(object):
     self.player_thread.start()
   
   def _init_interface(self):
-    self.interface = TkInterface(self.oscilators, self.player)
+    self.interface = TkInterface(self.oscilators, self.player, self.input)
     self.interface.start()
 
   def _continuous_play(self):
@@ -62,6 +63,15 @@ class App(object):
   def _update_ui(self, osc, time_axis, sample, limits):
     if self.interface is not None:
       self.interface.update(osc, time_axis, sample, limits)
+
+  def input(self, event):
+    key = event.char
+    note = input.keyboard_note_chart.get(key, "X")
+    freq = input.note_frequency_chart.get(note)
+
+    if freq is not None:
+      for osc in self.oscilators:
+        osc.set_frequency(freq)
 
   def _terminate(self):
     self.stop = True

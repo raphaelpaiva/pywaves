@@ -16,16 +16,16 @@ from oscilator import Oscilator
 from player import Player
 
 class Window(Frame):
-  def __init__(self, oscilators, player, master=None):
+  def __init__(self, oscilators, player, input_handler, master=None):
     Frame.__init__(
       self,
       master
     )
     self.master = master
-    self.stop   = False
     self.player = player
 
     self.oscilators = oscilators
+    self.input_handler = input_handler
 
     self.lines = {}
     self.canvas = {}
@@ -52,6 +52,7 @@ class Window(Frame):
     master_frame = self._create_master()
     master_frame.grid(row=0, column=1)
 
+    self.bind_all("<Key>", self.input_handler)
     self.grid()
 
   def _create_master(self):
@@ -216,26 +217,25 @@ class Window(Frame):
     return graph_frame
 
   def update_canvas(self):
-    if not self.stop:
-      for canvas in self.canvas.values():
-        try:
-          canvas.draw()
-          canvas.flush_events()
-        except TclError:
-          break
+    for canvas in self.canvas.values():
+      try:
+        canvas.draw()
+        canvas.flush_events()
+      except TclError:
+        break
 
-      self.after(0, self.update_canvas)
+    self.after(0, self.update_canvas)
 
   def update_osc_data(self, osc, time_axis, sample, xlimits):
     self.lines[osc].set_data(time_axis, sample)
     self.axes[osc].set_xlim(xlimits)
 
 class TkInterface(object):
-  def __init__(self, oscilators, player):
+  def __init__(self, oscilators, player, input_handler):
     self.root = tkinter.Tk()
     self.root.geometry("")
     
-    self.window = Window(oscilators, player, self.root)
+    self.window = Window(oscilators, player, input_handler, self.root)
     self.window.after(0, self.window.update_canvas)
   
   def start(self):
