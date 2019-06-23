@@ -1,4 +1,3 @@
-import threading
 import tkinter
 import numpy as np
 
@@ -17,19 +16,16 @@ from oscilator import Oscilator
 from player import Player
 
 class Window(Frame):
-  def __init__(self, master=None):
+  def __init__(self, oscilators, player, master=None):
     Frame.__init__(
       self,
       master
     )
     self.master = master
     self.stop   = False
+    self.player = player
 
-    self.oscilators    = [
-      Oscilator(name="SINUSOID", wave=Triangle(frequency=303.04429, width=1)),
-      Oscilator(name="TRIANGLE", wave=Triangle(frequency=303.18527, width=0.5)),
-      Oscilator(name="TRIANGLE", wave=Triangle(frequency=303.03481, width=0))
-    ]
+    self.oscilators = oscilators
 
     self.lines = {}
     self.canvas = {}
@@ -44,12 +40,8 @@ class Window(Frame):
     self.canvas["master"] = None
     self.axes["master"] = None
 
-    self.player        = Player()
-    self.player_thread = threading.Thread(target=self._continuous_play)
-
     self._create_window()
 
-    self.player_thread.start()
 
   def _create_window(self):
     self.master.title("JustASynth")
@@ -224,32 +216,6 @@ class Window(Frame):
 
     return graph_frame
 
-  def _continuous_play(self):
-    t = 0
-    while not self.stop:
-      sample_size = self.player.sample_size
-      sample_rate = self.player.sample_rate
-      duration    = sample_size / sample_rate
-      time        = t * duration
-
-      samples = []
-
-      for osc in self.oscilators:
-        sample, time_axis = osc.wave.sample(duration, sample_rate, start_time=time)
-        samples.append(sample)
-
-        self.lines[osc].set_data(time_axis, sample)
-        self.axes[osc].set_xlim((time, time + duration))
-
-      master, sample_time = self.player.mix(samples)
-
-      self.lines["master"].set_data(sample_time, master)
-      self.axes["master"].set_xlim((0, len(sample_time)))
-
-      self.player.play_sample(master)
-
-      t += 1
-
   def update_canvas(self):
     if not self.stop:
       for canvas in self.canvas.values():
@@ -261,24 +227,20 @@ class Window(Frame):
 
       self.after(0, self.update_canvas)
 
-  def terminate(self):
-    self.stop = True
-    self.player_thread.join()
-    self.player.terminate()
+  def update_osc_data(self, osc, time_axis, sample, xlimits):
+    self.lines[osc].set_data(time_axis, sample)
+    self.axes[osc].set_xlim(xlimits)
 
+class TkInterface(object):
+  def __init__(self, oscilators, player):
+    self.root = tkinter.Tk()
+    self.root.geometry("")
+    
+    self.window = Window(oscilators, player, self.root)
+    self.window.after(0, self.window.update_canvas)
+  
+  def start(self):
+    self.root.mainloop()
 
-def main():
-  root = tkinter.Tk()
-
-  root.geometry("")
-
-  app = Window(root)
-  app.after(0, app.update_canvas)
-
-  root.mainloop()
-
-  app.terminate()
-
-if __name__ == "__main__":
-  main()
-
+  def update(self, osc, time_axis, sample, xlimits):
+    self.window.update_osc_data(osc, time_axis, sample, xlimits)
