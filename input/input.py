@@ -1,3 +1,7 @@
+import os
+import sys
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
 import midi
 from queue import Queue
 from pynput import keyboard
@@ -31,40 +35,42 @@ class KeyboardInput(object):
     )
     self._last_press = None
     self.velocity = 128
-  
+
   def onpress(self, key):
-    # BUG: Test this! pressing the same key multiple times
     if self._last_press == key:
       return
-    
+
     try:
       if key.char in keyboard_note_table:
         note, octave = keyboard_note_table[key.char]
         midi_msg = midi.note_on(note, octave, self.velocity)
         self._last_press = key
-        
+
         self.queue.put(midi_msg)
     except AttributeError:
       self.queue.put(key)
-  
+
   def onrelease(self, key):
+    if self._last_press == key:
+      self._last_press = None
+
     try:
       if key.char in keyboard_note_table:
         note, octave = keyboard_note_table[key.char]
         midi_msg = midi.note_off(note, octave, self.velocity)
-        
+
         self.queue.put(midi_msg)
     except AttributeError:
-      self.queue.put(key)
-  
-  def start(self):
+      return
+
+  def start(self): # pragma: no cover
     self.keyboard_listener.start()
-  
-  def stop(self):
+
+  def stop(self): # pragma: no cover
     self.keyboard_listener.stop()
     self.keyboard_listener.join()
 
-if __name__ == "__main__":
+if __name__ == "__main__": # pragma: no cover
   queue = Queue()
   kb = KeyboardInput(queue)
 
@@ -74,9 +80,9 @@ if __name__ == "__main__":
   while item != keyboard.Key.esc:
     if item is not None:
       print(item)
-    
+
     item = queue.get()
 
   kb.stop()
 
-    
+
