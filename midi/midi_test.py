@@ -1,6 +1,7 @@
 import unittest
 
-from midi import note_to_midi_number
+from midi import note_to_midi_number, note_on, note_off
+from midi import MidiException
 
 # note, octave, expected
 note_to_midi_number_tests = [
@@ -136,10 +137,38 @@ note_to_midi_number_tests = [
 
 class MidiTest(unittest.TestCase):
 
-  def test_midiNoteToNumber(self):
+  def test_midiNoteToNumber_AllNotesAndOctaves(self):
     for test in note_to_midi_number_tests:
       note, octave, expected_value = test
       actual_value = note_to_midi_number(note, octave)
 
       self.assertEqual(actual_value, expected_value)
+
+  def test_midiNoteToNumber_NonExistingNote(self):
+    with self.assertRaises(MidiException) as me:
+      note_to_midi_number("x", 0)
+
+    self.assertEqual(me.exception.message, "'x' is not a Midi note.")
+
+  def test_midiNoteToNumber_NoneOctave(self):
+    with self.assertRaises(MidiException) as me:
+      note_to_midi_number("A", None)
+
+    self.assertEqual(me.exception.message, "Octave value should be integer. Recieved None.")
+
+  def test_note_on_ShouldHaveCorrectStatusCode(self):
+    expected_status_code = 0x90
+
+    midi_msg = note_on('A', 2, 128)
+    actual_status_code = midi_msg.status
+
+    self.assertEqual(actual_status_code, expected_status_code)
+
+  def test_note_off_ShouldHaveCorrectStatusCode(self):
+    expected_status_code = 0x80
+
+    midi_msg = note_off('A', 2, 128)
+    actual_status_code = midi_msg.status
+
+    self.assertEqual(actual_status_code, expected_status_code)
 

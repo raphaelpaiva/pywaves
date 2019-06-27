@@ -19,7 +19,13 @@ midi_status = {
 }
 
 def note_to_midi_number(note, octave):
-  return midi_note_table[note] + 12*(octave + 2)
+  if note not in midi_note_table:
+    raise MidiException(f"'{note}' is not a Midi note.")
+  if not isinstance(octave, int):
+    raise MidiException(f"Octave value should be integer. Recieved {octave}.")
+
+  base_note = midi_note_table[note]
+  return base_note + 12*(octave + 2)
 
 # TODO: Test this
 def midi_number_to_freq(note_number):
@@ -41,7 +47,7 @@ def note_on(note, octave, velocity):
 def note_off(note, octave, velocity):
   note_number = note_to_midi_number(note, octave)
   status = midi_status['note_off']
-  
+
   return MidiMessage(
     status,
     note_number,
@@ -53,6 +59,12 @@ class MidiMessage(object):
     self.status = status
     self.data1  = data1
     self.data2  = data2
-  
+
   def __str__(self):
     return f"MidiMessage({self.status:x}; {self.data1:x}; {self.data2:x})"
+
+class MidiException(Exception):
+  def __init__(self, message):
+    super().__init__(self, message)
+
+    self.message = message
