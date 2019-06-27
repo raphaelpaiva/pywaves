@@ -1,44 +1,82 @@
-note_frequency_chart = {
-  "C4": 261.6256,
-  "C#4": 277.1826,
-  "D4": 293.6648,
-  "D#4": 311.1270,
-  "E4": 329.6276,
-  "F4": 349.2282,
-  "F#4": 369.9944,
-  "G4": 391.9954,
-  "G#4": 415.3047,
-  "A4": 440.000,
-  "A#4": 466.1638,
-  "B4": 493.8833,
-  "C5": 523.2511,
-  "C#5": 554.3653,
-  "D5": 587.3295,
-  "D#5": 622.2540,
-  "E5": 659.2551,
-  "F5": 698.4565,
-  "F#5": 739.9888,
-  "G5": 783.9909,
-  "G#5": 830.6094,
+import midi
+from queue import Queue
+from pynput import keyboard
 
+keyboard_note_table = {
+  "q": ("E",  4),
+  "w": ("F",  4),
+  "3": ("F#", 4),
+  "e": ("G",  4),
+  "4": ("G#", 4),
+  "r": ("A",  4),
+  "5": ("A#", 4),
+  "t": ("B",  4),
+  "y": ("C",  5),
+  "7": ("C#", 5),
+  "u": ("D",  5),
+  "8": ("D#", 5),
+  "i": ("E",  5),
+  "o": ("F",  5),
+  "0": ("F#", 5),
+  "p": ("G",  5),
+  "-": ("G#", 5),
 }
 
-keyboard_note_chart = {
-  "q": "E4",
-  "w": "F4",
-  "3": "F#4",
-  "e": "G4",
-  "4": "G#4",
-  "r": "A4",
-  "5": "A#4",
-  "t": "B4",
-  "y": "C5",
-  "7": "C#5",
-  "u": "D5",
-  "8": "D#5",
-  "i": "E5",
-  "o": "F5",
-  "0": "F#5",
-  "p": "G5",
-  "-": "G#5",
-}
+class KeyboardInput(object):
+  def __init__(self, queue):
+    self.queue = queue
+    self.keyboard_listener = keyboard.Listener(
+      on_press = self.onpress,
+      on_release = self.onrelease
+    )
+    self._last_press = None
+    self.velocity = 128
+  
+  def onpress(self, key):
+    # BUG: Test this! pressing the same key multiple times
+    if self._last_press == key:
+      return
+    
+    try:
+      if key.char in keyboard_note_table:
+        note, octave = keyboard_note_table[key.char]
+        midi_msg = midi.note_on(note, octave, self.velocity)
+        self._last_press = key
+        
+        self.queue.put(midi_msg)
+    except AttributeError:
+      self.queue.put(key)
+  
+  def onrelease(self, key):
+    try:
+      if key.char in keyboard_note_table:
+        note, octave = keyboard_note_table[key.char]
+        midi_msg = midi.note_off(note, octave, self.velocity)
+        
+        self.queue.put(midi_msg)
+    except AttributeError:
+      self.queue.put(key)
+  
+  def start(self):
+    self.keyboard_listener.start()
+  
+  def stop(self):
+    self.keyboard_listener.stop()
+    self.keyboard_listener.join()
+
+if __name__ == "__main__":
+  queue = Queue()
+  kb = KeyboardInput(queue)
+
+  kb.start()
+
+  item = queue.get()
+  while item != keyboard.Key.esc:
+    if item is not None:
+      print(item)
+    
+    item = queue.get()
+
+  kb.stop()
+
+    
