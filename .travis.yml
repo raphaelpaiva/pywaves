@@ -1,0 +1,17 @@
+language: python
+
+matrix:
+  include:
+    - name: "Python 3.6 on Linux"
+      python: 3.6
+      dist: xenial
+    - name: "Python 3.6 on Windows"
+      os: windows
+      language: shell
+      before_install: choco install python
+      env: PATH=/c/Python36/:/c/Python37/Scripts:$PATH
+# command to install dependencies
+install: pip install -r requirements.txt
+# command to run tests
+script:
+  - python -m unittest discover -p *_test.py
