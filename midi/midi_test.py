@@ -1,7 +1,9 @@
+import unittest
+
 from midi import note_to_midi_number
 
 # note, octave, expected
-tests = [
+note_to_midi_number_tests = [
   ("C", -2, 0),
   ("C#", -2, 1),
   ("D", -2, 2),
@@ -132,16 +134,12 @@ tests = [
   ("G", 8, 127),
 ]
 
-failed = []
+class MidiTest(unittest.TestCase):
 
-for test in tests:
-  note, octave, expected_value = test
-  actual_value = note_to_midi_number(note, octave)
+  def test_midiNoteToNumber(self):
+    for test in note_to_midi_number_tests:
+      note, octave, expected_value = test
+      actual_value = note_to_midi_number(note, octave)
 
-  if actual_value != expected_value:
-    failed.append((test, actual_value))
+      self.assertEqual(actual_value, expected_value)
 
-if not failed:
-  print("Success!")
-else:
-  print(failed)
