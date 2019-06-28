@@ -1,23 +1,35 @@
 import threading
-import input
+from queue import Queue
+from input.input import (KeyboardInput, keyboard)
+from midi.midi import (MidiMessage, ST_NOTE_ON, ST_NOTE_OFF, midi_number_to_freq)
 
-from interface import TkInterface
+from interface import (TkInterface, CLInterface)
 
 from sinusoud import (Sinusoid, Triangle)
 from oscilator import Oscilator
 from player import Player
 
 class App(object):
-  def __init__(self):
-    self._init_config()
+  def __init__(self, interface_type):
+    self.interface_type = interface_type
+    self.interface = None
+
+    self._init_input()
+    self._init_generator()
     self._init_sound_engine()
     self._init_interface()
 
+    self._process_queue()
+
     self._terminate()
   
-  def _init_config(self):
-    self.interface = None
+  def _init_input(self):
+    self.event_queue = Queue()
+    self.input = KeyboardInput(self.event_queue)
     
+    self.input.start()
+
+  def _init_generator(self):
     self.oscilators = [
       Oscilator(name="Sine", wave=Sinusoid(frequency=303.04429)),
       Oscilator(name="Triangle", wave=Triangle(frequency=303.18527, width=0.5)),
@@ -32,7 +44,7 @@ class App(object):
     self.player_thread.start()
   
   def _init_interface(self):
-    self.interface = TkInterface(self.oscilators, self.player, self.input)
+    self.interface = self.interface_type(self.oscilators, self.player)
     self.interface.start()
 
   def _continuous_play(self):
@@ -63,24 +75,30 @@ class App(object):
   def _update_ui(self, osc, time_axis, sample, limits):
     if self.interface is not None:
       self.interface.update(osc, time_axis, sample, limits)
-
-  def input(self, event):
-    key = event.char
-    note = input.keyboard_note_chart.get(key, "X")
-    freq = input.note_frequency_chart.get(note)
-
-    if freq is not None:
-      for osc in self.oscilators:
-        osc.set_frequency(freq)
-
+  
   def _terminate(self):
     self.stop = True
     self.player_thread.join()
     self.player.terminate()
 
+    self.input.stop()
+
+  def _process_queue(self):
+    item = self.event_queue.get()
+
+    while item != keyboard.Key.esc:
+      if isinstance(item, MidiMessage):
+        if item.status == ST_NOTE_ON:
+          note_number = item.data1
+          freq = midi_number_to_freq(note_number)
+          print(freq)
+          for osc in self.oscilators:
+            osc.set_frequency(freq)
+      
+      item = self.event_queue.get()
+
 def main():
-  print("JustASynth")
-  App()
+  App(CLInterface)
 
 if __name__ == "__main__":
     main()

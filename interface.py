@@ -243,3 +243,20 @@ class TkInterface(object):
 
   def update(self, osc, time_axis, sample, xlimits):
     self.window.update_osc_data(osc, time_axis, sample, xlimits)
+
+class CLInterface(object):
+  def __init__(self, oscilators, player, **kwargs):
+    self.oscilators = oscilators
+    self.player = player
+  
+  def start(self):
+    print("JustASynth!")
+    print(f"""
+    Channels:    {self.player.channels}
+    Sample Size: {self.player.sample_size}
+    Sample Rate: {self.player.sample_rate}Hz
+
+    Just play! Press <esc> to exit...
+    """)
+  
+  def update(self, osc, time_axis, sample, xlimits): pass

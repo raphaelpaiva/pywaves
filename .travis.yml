@@ -5,6 +5,8 @@ matrix:
     - name: "Python 3.6 on Linux"
       python: 3.6
       dist: xenial
+      services:
+        - xvfb
       before_install: sudo apt-get install portaudio19-dev
     - name: "Python 3.6 on Windows"
       os: windows
