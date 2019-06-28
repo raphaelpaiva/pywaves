@@ -1,9 +1,7 @@
-# pywaves
-Random studying of Digital Signal Processing
+# pywaves [![Build Status](https://travis-ci.org/raphaelpaiva/pywaves.svg?branch=master)](https://travis-ci.org/raphaelpaiva/pywaves)
+A Python Midi-capable Software Synthesizer
 
-Some experiments with DSP generating, analyzing and combining soundwaves.
-
-pyAudio is a requirement, thus, unless you have it installed in your python 3.7, this project requires python 3.6-
+pyAudio is a requirement, thus, unless you have it installed in your python 3.7, this project requires python ~3.6
 
 ```bash
 $ python app.py
