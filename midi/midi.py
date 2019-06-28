@@ -13,10 +13,8 @@ midi_note_table = {
   "B":  11
 }
 
-midi_status = {
-  "note_off": 0x80,
-  "note_on":  0x90,
-}
+ST_NOTE_OFF = 0x80
+ST_NOTE_ON  = 0x90
 
 def note_to_midi_number(note, octave):
   if note not in midi_note_table:
@@ -25,7 +23,7 @@ def note_to_midi_number(note, octave):
     raise MidiException(f"Octave value should be integer. Recieved {octave}.")
 
   base_note = midi_note_table[note]
-  return base_note + 12*(octave + 2)
+  return base_note + 12*(octave + 1)
 
 # TODO: Test this
 def midi_number_to_freq(note_number):
@@ -36,7 +34,7 @@ def midi_number_to_freq(note_number):
 
 def note_on(note, octave, velocity):
   note_number = note_to_midi_number(note, octave)
-  status = midi_status['note_on']
+  status = ST_NOTE_ON
 
   return MidiMessage(
     status,
@@ -46,7 +44,7 @@ def note_on(note, octave, velocity):
 
 def note_off(note, octave, velocity):
   note_number = note_to_midi_number(note, octave)
-  status = midi_status['note_off']
+  status = ST_NOTE_OFF
 
   return MidiMessage(
     status,

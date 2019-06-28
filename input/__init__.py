@@ -1,1 +1,1 @@
-from .input import *
+from input import *

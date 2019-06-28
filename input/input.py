@@ -31,7 +31,8 @@ class KeyboardInput(object):
     self.queue = queue
     self.keyboard_listener = keyboard.Listener(
       on_press = self.onpress,
-      on_release = self.onrelease
+      on_release = self.onrelease,
+      supress=True
     )
     self._last_press = None
     self.velocity = 128
@@ -70,19 +71,5 @@ class KeyboardInput(object):
     self.keyboard_listener.stop()
     self.keyboard_listener.join()
 
-if __name__ == "__main__": # pragma: no cover
-  queue = Queue()
-  kb = KeyboardInput(queue)
-
-  kb.start()
-
-  item = queue.get()
-  while item != keyboard.Key.esc:
-    if item is not None:
-      print(item)
-
-    item = queue.get()
-
-  kb.stop()
 
 

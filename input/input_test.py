@@ -3,7 +3,7 @@ from unittest import TestCase, main
 from pynput.keyboard import Key, KeyCode
 from collections import namedtuple
 from queue import Queue
-from input import KeyboardInput
+from input.input import KeyboardInput
 
 class KeyboardInputTest(TestCase):
   def _assert_queue_size(self, queue, expected_size=1):
@@ -40,7 +40,7 @@ class KeyboardInputTest(TestCase):
 
     msg = queue.get()
 
-    self._assert_midi_message(msg, 0x90, 76)
+    self._assert_midi_message(msg, 0x90, 64)
 
   def test_onpress_UnmappedKeyShouldNotPutKeyInQueue(self):
     queue = Queue()
@@ -68,7 +68,7 @@ class KeyboardInputTest(TestCase):
 
     msg = queue.get()
 
-    self._assert_midi_message(msg, 0x90, 84)
+    self._assert_midi_message(msg, 0x90, 72)
 
   def test_onrelease_OneKeyPressShouldCreateOneMidiOnMessage(self):
     queue = Queue()
@@ -81,7 +81,7 @@ class KeyboardInputTest(TestCase):
 
     msg = queue.get()
 
-    self._assert_midi_message(msg, 0x80, 76)
+    self._assert_midi_message(msg, 0x80, 64)
 
   def test_onrelease_SpecialKeyShouldNotPutKeyInQueue(self):
     queue = Queue()
@@ -119,9 +119,9 @@ class KeyboardInputTest(TestCase):
     msg2 = queue.get()
     msg3 = queue.get()
 
-    self._assert_midi_message(msg1, 0x90, 84)
-    self._assert_midi_message(msg2, 0x80, 84)
-    self._assert_midi_message(msg3, 0x90, 84)
+    self._assert_midi_message(msg1, 0x90, 72)
+    self._assert_midi_message(msg2, 0x80, 72)
+    self._assert_midi_message(msg3, 0x90, 72)
 
 if __name__ == "__main__":
     main()
