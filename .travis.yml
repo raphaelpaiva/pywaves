@@ -5,7 +5,7 @@ matrix:
     - name: "Python 3.6 on Linux"
       python: 3.6
       dist: xenial
-      before_install: sudo apt-get install python-pyaudio
+      before_install: sudo apt-get install portaudio19-dev
     - name: "Python 3.6 on Windows"
       os: windows
       python: 3.6
