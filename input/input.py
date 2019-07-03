@@ -1,30 +1,15 @@
 import os
 import sys
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+import time
 
-import midi
 from queue import Queue
 from pynput import keyboard
 
-keyboard_note_table = {
-  "q": ("E",  4),
-  "w": ("F",  4),
-  "3": ("F#", 4),
-  "e": ("G",  4),
-  "4": ("G#", 4),
-  "r": ("A",  4),
-  "5": ("A#", 4),
-  "t": ("B",  4),
-  "y": ("C",  5),
-  "7": ("C#", 5),
-  "u": ("D",  5),
-  "8": ("D#", 5),
-  "i": ("E",  5),
-  "o": ("F",  5),
-  "0": ("F#", 5),
-  "p": ("G",  5),
-  "-": ("G#", 5),
-}
+EVT_KEY          = 'key_'
+EVT_KEY_PRESSED  = EVT_KEY + '_pressed'
+EVT_KEY_RELEASED = EVT_KEY + '_released'
+
+press_time = 0
 
 class KeyboardInput(object):
   def __init__(self, queue):
@@ -35,32 +20,29 @@ class KeyboardInput(object):
       supress=True
     )
     self._last_press = None
-    self.velocity = 128
 
   def onpress(self, key):
+    press_time = time.time()
     if self._last_press == key:
       return
 
-    try:
-      if key.char in keyboard_note_table:
-        note, octave = keyboard_note_table[key.char]
-        midi_msg = midi.note_on(note, octave, self.velocity)
-        self._last_press = key
+    event = None
+    if hasattr(key, 'char'):
+      event = (EVT_KEY_PRESSED, key.char, press_time)
+      self._last_press = key
+    else:
+      event = (EVT_KEY_PRESSED, f"<{key.name}>", press_time)
 
-        self.queue.put(midi_msg)
-    except AttributeError:
-      self.queue.put(key)
+    self.queue.put(event)
 
   def onrelease(self, key):
     if self._last_press == key:
       self._last_press = None
 
     try:
-      if key.char in keyboard_note_table:
-        note, octave = keyboard_note_table[key.char]
-        midi_msg = midi.note_off(note, octave, self.velocity)
+      event = (EVT_KEY_RELEASED, key.char, time.time())
 
-        self.queue.put(midi_msg)
+      self.queue.put(event)
     except AttributeError:
       return
 

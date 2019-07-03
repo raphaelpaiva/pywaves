@@ -16,6 +16,8 @@ midi_note_table = {
 ST_NOTE_OFF = 0x80
 ST_NOTE_ON  = 0x90
 
+EVT_MIDI    = 'midi_'
+
 def note_to_midi_number(note, octave):
   if note not in midi_note_table:
     raise MidiException(f"'{note}' is not a Midi note.")
