@@ -1,5 +1,5 @@
 import threading
-from queue import Queue
+from event_queue import (EventQueue, Event)
 import input
 from input import (KeyboardInput, EVT_KEY, EVT_KEY_PRESSED, EVT_KEY_RELEASED)
 import midi
@@ -46,7 +46,7 @@ class App(object):
     self._terminate()
 
   def _init_input(self):
-    self.event_queue = Queue()
+    self.event_queue = EventQueue()
     self.input = KeyboardInput(self.event_queue)
 
     self.input.start()
@@ -112,36 +112,37 @@ class App(object):
 
       if event is None:
         continue
-
-      event_type, item, e_time = event
-
-      if item == '<esc>':
+      
+      if event.item == '<esc>':
         break
+      
+      item = event.item
 
-      if event_type == midi.EVT_MIDI:
+      if event.type == midi.EVT_MIDI:
         if item.status == midi.ST_NOTE_ON:
           note_number = item.data1
           freq = midi.midi_number_to_freq(note_number)
           for osc in self.oscilators:
             osc.set_frequency(freq)
 
-      if event_type.startswith(EVT_KEY):
+      if event.type.startswith(EVT_KEY):
         if item not in keyboard_note_table:
           continue
 
         note, octave = keyboard_note_table[item]
-        if event_type == EVT_KEY_PRESSED:
-          new_event = (
-            midi.EVT_MIDI,
+        
+        if event.type == EVT_KEY_PRESSED:
+          new_event = Event(
             midi.note_on(note, octave, 127),
-            e_time
+            midi.EVT_MIDI,
+            timestamp=event.timestamp
           )
 
-        if event_type == EVT_KEY_RELEASED:
-          new_event = (
-            midi.EVT_MIDI,
+        if event.type == EVT_KEY_RELEASED:
+          new_event = Event(
             midi.note_off(note, octave, 127),
-            e_time
+            midi.EVT_MIDI,
+            timestamp=time.time()
           )
 
         self.event_queue.put(new_event)

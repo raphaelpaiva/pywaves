@@ -5,18 +5,25 @@ from collections import namedtuple
 from queue import Queue
 from input import KeyboardInput, EVT_KEY_PRESSED, EVT_KEY_RELEASED
 
+class EventQueueMock(Queue):
+  def __init__(self):
+    super().__init__()
+  
+  def put(self, *args, **kwargs):
+    EventMock = namedtuple('Event', ['item', 'type', 'timestamp'])
+    super().put(EventMock(*args, **kwargs))
+
 class KeyboardInputTest(TestCase):
   def _assert_queue_size(self, queue, expected_size=1):
     self.assertFalse(queue.empty(), "Expected the queue not to be empty")
     self.assertEqual(queue.qsize(), expected_size)
 
   def _assert_message(self, msg, expected_type, expected_key):
-    msg_type, key = msg
-    self.assertEqual(msg_type, expected_type)
-    self.assertEqual(key, expected_key)
+    self.assertEqual(msg.type, expected_type)
+    self.assertEqual(msg.item, expected_key)
 
   def test_onpress_SpecialKeyShouldPutKeyInQueue(self):
-    queue = Queue()
+    queue = EventQueueMock()
     key_pressed = Key.esc
 
     kb = KeyboardInput(queue)
@@ -29,7 +36,7 @@ class KeyboardInputTest(TestCase):
     self._assert_message(msg, EVT_KEY_PRESSED, '<esc>')
 
   def test_onpress_OneKeyPressShouldCreateOneMidiOnMessage(self):
-    queue = Queue()
+    queue = EventQueueMock()
     key_pressed = KeyCode.from_char('q')
 
     kb = KeyboardInput(queue)
@@ -42,7 +49,7 @@ class KeyboardInputTest(TestCase):
     self._assert_message(msg, EVT_KEY_PRESSED, 'q')
 
   def test_onpress_KeepPressingAKeyShouldPutOnlyOneNoteOnMessageOnTheQueue(self):
-    queue = Queue()
+    queue = EventQueueMock()
     key_pressed = KeyCode.from_char('y')
 
     kb = KeyboardInput(queue)
@@ -61,7 +68,7 @@ class KeyboardInputTest(TestCase):
     self._assert_message(msg, EVT_KEY_PRESSED, 'y')
 
   def test_onrelease_OneKeyPressShouldCreateOneMidiOnMessage(self):
-    queue = Queue()
+    queue = EventQueueMock()
     key_released = KeyCode.from_char('q')
 
     kb = KeyboardInput(queue)
@@ -74,7 +81,7 @@ class KeyboardInputTest(TestCase):
     self._assert_message(msg, EVT_KEY_RELEASED, 'q')
 
   def test_onrelease_SpecialKeyShouldNotPutKeyInQueue(self):
-    queue = Queue()
+    queue = EventQueueMock()
     key_released = Key.esc
 
     kb = KeyboardInput(queue)
@@ -84,7 +91,7 @@ class KeyboardInputTest(TestCase):
 
   # Testing a bug (Issue #1)
   def test_pressReleasePress_shouldNotBlockTheLastPress(self):
-    queue = Queue()
+    queue = EventQueueMock()
     target_key = KeyCode.from_char('y')
 
     kb = KeyboardInput(queue)

@@ -26,23 +26,20 @@ class KeyboardInput(object):
     if self._last_press == key:
       return
 
-    event = None
     if hasattr(key, 'char'):
-      event = (EVT_KEY_PRESSED, key.char, press_time)
       self._last_press = key
+      self.queue.put(key.char, EVT_KEY_PRESSED, timestamp=press_time)
     else:
-      event = (EVT_KEY_PRESSED, f"<{key.name}>", press_time)
-
-    self.queue.put(event)
+      self.queue.put(f"<{key.name}>", EVT_KEY_PRESSED, timestamp=press_time)
 
   def onrelease(self, key):
+    release_time = time.time()
     if self._last_press == key:
       self._last_press = None
 
     try:
-      event = (EVT_KEY_RELEASED, key.char, time.time())
-
-      self.queue.put(event)
+      self.queue.put(key.char, EVT_KEY_RELEASED, timestamp=release_time)
+    
     except AttributeError:
       return
 
