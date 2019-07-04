@@ -3,17 +3,17 @@ from unittest import TestCase, main
 from pynput.keyboard import Key, KeyCode
 from collections import namedtuple
 from queue import Queue
-from input.input import KeyboardInput
+from input import KeyboardInput, EVT_KEY_PRESSED, EVT_KEY_RELEASED
 
 class KeyboardInputTest(TestCase):
   def _assert_queue_size(self, queue, expected_size=1):
     self.assertFalse(queue.empty(), "Expected the queue not to be empty")
     self.assertEqual(queue.qsize(), expected_size)
 
-  def _assert_midi_message(self, msg, expected_status, expected_note_number):
-    self.assertEqual(msg.status, expected_status)
-    self.assertEqual(msg.data1, expected_note_number)
-    self.assertEqual(msg.data2, 128)
+  def _assert_message(self, msg, expected_type, expected_key):
+    msg_type, key = msg
+    self.assertEqual(msg_type, expected_type)
+    self.assertEqual(key, expected_key)
 
   def test_onpress_SpecialKeyShouldPutKeyInQueue(self):
     queue = Queue()
@@ -24,10 +24,9 @@ class KeyboardInputTest(TestCase):
 
     self._assert_queue_size(queue)
 
-    key = queue.get()
+    msg = queue.get()
 
-    self.assertIsInstance(key, Key, "Expected queue item to be a pynput.keyboard.Key")
-    self.assertEqual(key, Key.esc)
+    self._assert_message(msg, EVT_KEY_PRESSED, '<esc>')
 
   def test_onpress_OneKeyPressShouldCreateOneMidiOnMessage(self):
     queue = Queue()
@@ -40,16 +39,7 @@ class KeyboardInputTest(TestCase):
 
     msg = queue.get()
 
-    self._assert_midi_message(msg, 0x90, 64)
-
-  def test_onpress_UnmappedKeyShouldNotPutKeyInQueue(self):
-    queue = Queue()
-    key_pressed = KeyCode.from_char('b')
-
-    kb = KeyboardInput(queue)
-    kb.onpress(key_pressed)
-
-    self.assertTrue(queue.empty(), "Expected the queue to be empty")
+    self._assert_message(msg, EVT_KEY_PRESSED, 'q')
 
   def test_onpress_KeepPressingAKeyShouldPutOnlyOneNoteOnMessageOnTheQueue(self):
     queue = Queue()
@@ -68,7 +58,7 @@ class KeyboardInputTest(TestCase):
 
     msg = queue.get()
 
-    self._assert_midi_message(msg, 0x90, 72)
+    self._assert_message(msg, EVT_KEY_PRESSED, 'y')
 
   def test_onrelease_OneKeyPressShouldCreateOneMidiOnMessage(self):
     queue = Queue()
@@ -81,20 +71,11 @@ class KeyboardInputTest(TestCase):
 
     msg = queue.get()
 
-    self._assert_midi_message(msg, 0x80, 64)
+    self._assert_message(msg, EVT_KEY_RELEASED, 'q')
 
   def test_onrelease_SpecialKeyShouldNotPutKeyInQueue(self):
     queue = Queue()
     key_released = Key.esc
-
-    kb = KeyboardInput(queue)
-    kb.onrelease(key_released)
-
-    self.assertTrue(queue.empty(), "Expected the queue to be empty")
-
-  def test_onrelease_UnmappedKeyShouldNotPutKeyInQueue(self):
-    queue = Queue()
-    key_released = KeyCode.from_char('b')
 
     kb = KeyboardInput(queue)
     kb.onrelease(key_released)
@@ -119,9 +100,9 @@ class KeyboardInputTest(TestCase):
     msg2 = queue.get()
     msg3 = queue.get()
 
-    self._assert_midi_message(msg1, 0x90, 72)
-    self._assert_midi_message(msg2, 0x80, 72)
-    self._assert_midi_message(msg3, 0x90, 72)
+    self._assert_message(msg1, EVT_KEY_PRESSED, 'y')
+    self._assert_message(msg2, EVT_KEY_RELEASED, 'y')
+    self._assert_message(msg3, EVT_KEY_PRESSED, 'y')
 
 if __name__ == "__main__":
     main()
