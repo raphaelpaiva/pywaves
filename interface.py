@@ -16,7 +16,7 @@ from oscilator import Oscilator
 from player import Player
 
 class Window(Frame):
-  def __init__(self, oscilators, player, input_handler, master=None):
+  def __init__(self, oscilators, player, master=None):
     Frame.__init__(
       self,
       master
@@ -25,7 +25,6 @@ class Window(Frame):
     self.player = player
 
     self.oscilators = oscilators
-    self.input_handler = input_handler
 
     self.lines = {}
     self.canvas = {}
@@ -52,7 +51,6 @@ class Window(Frame):
     master_frame = self._create_master()
     master_frame.grid(row=0, column=1)
 
-    self.bind_all("<Key>", self.input_handler)
     self.grid()
 
   def _create_master(self):
@@ -231,11 +229,11 @@ class Window(Frame):
     self.axes[osc].set_xlim(xlimits)
 
 class TkInterface(object):
-  def __init__(self, oscilators, player, input_handler):
+  def __init__(self, oscilators, player):
     self.root = tkinter.Tk()
     self.root.geometry("")
     
-    self.window = Window(oscilators, player, input_handler, self.root)
+    self.window = Window(oscilators, player, self.root)
     self.window.after(0, self.window.update_canvas)
   
   def start(self):
