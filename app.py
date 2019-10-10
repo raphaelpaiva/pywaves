@@ -4,12 +4,14 @@ import input
 from input import (KeyboardInput, EVT_KEY, EVT_KEY_PRESSED, EVT_KEY_RELEASED)
 import midi
 import time
+import numpy as np
 
 from interface import (TkInterface, CLInterface)
 
 from sinusoud import (Sinusoid, Triangle)
 from oscilator import Oscilator
 from player import Player
+from sampler import Sampler
 
 keyboard_note_table = {
   "q": ("E",  4),
@@ -60,6 +62,7 @@ class App(object):
 
   def _init_sound_engine(self):
     self.player        = Player()
+    self.sampler       = Sampler()
     self.player_thread = threading.Thread(target=self._continuous_play)
 
     self.stop = False
@@ -77,19 +80,12 @@ class App(object):
       duration    = sample_size / sample_rate
       time        = t * duration
 
-      samples = []
-
-      for osc in self.oscilators:
-        sample, time_axis = osc.wave.sample(duration, sample_rate, start_time=time)
-        samples.append(sample)
-        limits = (time, time + duration)
-        self._update_ui(osc, time_axis, sample, limits)
-
-      master, master_time = self.player.mix(samples)
+      waves = [o.wave for o in self.oscilators]
+      master = self.sampler.sample_waves(waves, duration, time)
+      master_time = np.arange(len(master))
       master_limits = (0, len(master_time))
-
+      
       self._update_ui("master", master_time, master, master_limits)
-
       self.player.play_sample(master)
 
       t += 1
