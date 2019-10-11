@@ -89,7 +89,6 @@ class App(object):
       master_limits = (0, len(master_time))
       
       self.player.play_sample(master)
-      
       self._update_ui("master", master_time, master, master_limits)
 
       t += 1
@@ -132,7 +131,7 @@ class App(object):
       if event is None:
         continue
       
-      if event.item == '<esc>':
+      if event.item == 'esc':
         break
       
       item = event.item
@@ -154,13 +153,15 @@ class App(object):
           new_event = Event(
             midi.note_on(note, octave, 127),
             midi.EVT_MIDI,
-            timestamp=event.timestamp
+            ancestor=event,
+            timestamp=time.time()
           )
 
         if event.type == EVT_KEY_RELEASED:
           new_event = Event(
             midi.note_off(note, octave, 127),
             midi.EVT_MIDI,
+            ancestor=event,
             timestamp=time.time()
           )
 

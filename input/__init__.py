@@ -1,1 +1,2 @@
-from .input import *
+from .keyboardInput import *
+from .pynputInput import *

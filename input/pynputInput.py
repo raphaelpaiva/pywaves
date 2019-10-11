@@ -11,7 +11,7 @@ EVT_KEY_RELEASED = EVT_KEY + '_released'
 
 press_time = 0
 
-class KeyboardInput(object):
+class PyinputInput(object):
   def __init__(self, queue):
     self.queue = queue
     self.keyboard_listener = keyboard.Listener(
@@ -49,6 +49,3 @@ class KeyboardInput(object):
   def stop(self): # pragma: no cover
     self.keyboard_listener.stop()
     self.keyboard_listener.join()
-
-
-
