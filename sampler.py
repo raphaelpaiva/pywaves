@@ -9,14 +9,19 @@ class Sampler(object):
 
   def _get_first_avilable_voice(self):
     for i in range(self.num_voices):
-      if voices[i] is None:
+      if self.voices[i] is None:
         return i
     
     return -1
 
-  def allocate_voice(self, sample):
+  def allocate_voice(self, payload):
     voice_idx = self._get_first_avilable_voice()
-    self.voices[voice_idx] = sample
+    self.voices[voice_idx] = payload
+    
+    return voice_idx
+  
+  def free_voice(self, voice_idx):
+    self.voices[voice_idx] = None
 
   def create_wave_sample(self, wave, duration, start_time=0.0):
     t = np.arange(start_time, start_time + duration, 1/self.sample_rate)
@@ -35,13 +40,22 @@ class Sampler(object):
     
     return self.mix(samples)
 
+  def get_master(self, duration, start_time=0.0):
+    samples = [self.sample_waves(w, duration, start_time) for w in self.voices if w is not None]
+    
+    return self.mix(samples)
+
   def mix(self, samples):
       if not samples:
         return []
 
+      final = np.zeros(self.sample_size)
+      
       for sample in samples:
         work_sample = sample
         if len(sample) > self.sample_size:
           work_sample = sample[0:self.sample_size] # Hard cut
+        
+        final = final + work_sample
 
-        return work_sample
+      return final

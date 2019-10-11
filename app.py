@@ -1,4 +1,5 @@
 import threading
+import copy
 from event_queue import (EventQueue, Event)
 import input
 from input import (KeyboardInput, EVT_KEY, EVT_KEY_PRESSED, EVT_KEY_RELEASED)
@@ -42,6 +43,8 @@ class App(object):
     self._init_generator()
     self._init_sound_engine()
     self._init_interface()
+    
+    self.note_voice = {}
 
     self._process_queue()
 
@@ -80,13 +83,14 @@ class App(object):
       duration    = sample_size / sample_rate
       time        = t * duration
 
-      waves = [o.wave for o in self.oscilators]
-      master = self.sampler.sample_waves(waves, duration, time)
+      master = self.sampler.get_master(duration, time)
+      
       master_time = np.arange(len(master))
       master_limits = (0, len(master_time))
       
-      self._update_ui("master", master_time, master, master_limits)
       self.player.play_sample(master)
+      
+      self._update_ui("master", master_time, master, master_limits)
 
       t += 1
 
@@ -101,8 +105,27 @@ class App(object):
 
     self.input.stop()
 
-  def _process_queue(self):
+  def _evt_note_on(self, item):
+    sample_size = self.player.sample_size
+    sample_rate = self.player.sample_rate
+    duration    = sample_size / sample_rate
+    
+    note_number = item.data1
+    freq = midi.midi_number_to_freq(note_number)
+    for osc in self.oscilators:
+      osc.set_frequency(freq)
+    
+    waves = [copy.copy(o.wave) for o in self.oscilators]
+    voice_index = self.sampler.allocate_voice(waves)
 
+    self.note_voice[note_number] = voice_index
+  
+  def _evt_note_off(self, item):
+    note_number = item.data1
+    voice_idx = self.note_voice[note_number]
+    self.sampler.free_voice(voice_idx)
+
+  def _process_queue(self):
     while True:
       event = self.event_queue.get()
 
@@ -116,10 +139,10 @@ class App(object):
 
       if event.type == midi.EVT_MIDI:
         if item.status == midi.ST_NOTE_ON:
-          note_number = item.data1
-          freq = midi.midi_number_to_freq(note_number)
-          for osc in self.oscilators:
-            osc.set_frequency(freq)
+          self._evt_note_on(item)
+        
+        if item.status == midi.ST_NOTE_OFF:
+          self._evt_note_off(item)
 
       if event.type.startswith(EVT_KEY):
         if item not in keyboard_note_table:
