@@ -17,3 +17,4 @@ class Event(object):
     self.type = event_type
     self.item = item
     self.timestamp = kwargs.get('timestamp')
+    self.ancestor = kwargs.get('ancestor')
