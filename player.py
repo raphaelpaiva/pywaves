@@ -25,6 +25,9 @@ class Player(object):
     return stream
 
   def play_sample(self, sample):
+    if sample is None or len(sample) == 0:
+      return
+    
     normalized = self.normalize(sample)
 
     self.stream.write(normalized)
