@@ -16,15 +16,17 @@ from oscilator import Oscilator
 from player import Player
 
 class Window(Frame):
-  def __init__(self, oscilators, player, master=None):
+  def __init__(self, synth, master=None):
     Frame.__init__(
       self,
       master
     )
+    
     self.master = master
-    self.player = player
+    self.player = synth.player
+    self.sampler = synth.sampler
 
-    self.oscilators = oscilators
+    self.oscilators = synth.oscilators
 
     self.lines = {}
     self.canvas = {}
@@ -45,8 +47,8 @@ class Window(Frame):
     self.master.title("JustASynth")
 
     osc_frames = self._create_osc()
-    for frame in osc_frames:
-      frame.grid()
+    #for frame in osc_frames:
+    #  frame.grid()
 
     master_frame = self._create_master()
     master_frame.grid(row=0, column=1)
@@ -215,6 +217,11 @@ class Window(Frame):
     return graph_frame
 
   def update_canvas(self):
+    master_data = self.player.master_sample
+
+    if master_data is not None:
+      self.update_osc_data('master', np.arange(len(master_data)), master_data)
+    
     for canvas in self.canvas.values():
       try:
         canvas.draw()
@@ -224,16 +231,19 @@ class Window(Frame):
 
     self.after(0, self.update_canvas)
 
-  def update_osc_data(self, osc, time_axis, sample, xlimits):
+  def update_osc_data(self, osc, time_axis, sample, xlimits=None):
+    if xlimits is None:
+      xlimits = (0, len(sample))
+    
     self.lines[osc].set_data(time_axis, sample)
     self.axes[osc].set_xlim(xlimits)
 
 class TkInterface(object):
-  def __init__(self, oscilators, player):
+  def __init__(self, synth):
     self.root = tkinter.Tk()
     self.root.geometry("")
     
-    self.window = Window(oscilators, player, self.root)
+    self.window = Window(synth, self.root)
     self.window.after(0, self.window.update_canvas)
   
   def start(self):
@@ -243,16 +253,15 @@ class TkInterface(object):
     self.window.update_osc_data(osc, time_axis, sample, xlimits)
 
 class CLInterface(object):
-  def __init__(self, oscilators, player, **kwargs):
-    self.oscilators = oscilators
-    self.player = player
+  def __init__(self, synth, **kwargs):
+    self.synth = synth
   
   def start(self):
     print("JustASynth!")
     print(f"""
-    Channels:    {self.player.channels}
-    Sample Size: {self.player.sample_size}
-    Sample Rate: {self.player.sample_rate}Hz
+    Channels:    {self.synth.player.channels}
+    Sample Size: {self.synth.player.sample_size}
+    Sample Rate: {self.synth.player.sample_rate}Hz
 
     Just play! Press <esc> to exit...
     """)

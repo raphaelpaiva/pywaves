@@ -11,6 +11,7 @@ class Player(object):
     self.format      = audio_format
     self.volume      = volume
 
+    self.master_sample = None
     self.stream = self.open_stream()
 
   def open_stream(self):
@@ -25,11 +26,13 @@ class Player(object):
     return stream
 
   def play_sample(self, sample):
+    self.master_sample = sample
     if sample is None or len(sample) == 0:
       return
     
     normalized = self.normalize(sample)
 
+    self.master_sample = normalized
     self.stream.write(normalized)
 
   def normalize(self, sample):
