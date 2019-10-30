@@ -95,7 +95,7 @@ class Window(Frame):
       text=f"Sample Rate: {self.player.sample_rate}Hz"
     ).grid(sticky=tkinter.W)
 
-    self._create_graph_frame("master", master_frame, ylim=(0,1)).grid()
+    self._create_graph_frame("master", master_frame, ylim=(-1,1)).grid()
 
     return master_frame
 
