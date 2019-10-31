@@ -55,10 +55,10 @@ def init_log(args):
       datefmt="%d/%m/%Y %H:%M:%S"
     )
 
-    log = logging.getLogger(f'{LOGGER_NAME}.init')
-    log.debug('Oh, hello there! ;)')
+  log = logging.getLogger(f'{LOGGER_NAME}.init')
+  log.debug('Oh, hello there! ;)')
 
-    return log
+  return log
 
 def parse_args():
   parser = argparse.ArgumentParser(description="I'm a poor synth")

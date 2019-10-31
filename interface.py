@@ -47,8 +47,8 @@ class Window(Frame):
     self.master.title("JustASynth")
 
     osc_frames = self._create_osc()
-    #for frame in osc_frames:
-    #  frame.grid()
+    for frame in osc_frames:
+      frame.grid()
 
     master_frame = self._create_master()
     master_frame.grid(row=0, column=1)
@@ -109,29 +109,6 @@ class Window(Frame):
         relief=tkinter.GROOVE,
         borderwidth=5
       )
-
-      freq_tracker = tkinter.DoubleVar()
-      freq_tracker.set(float(osc.wave.frequency))
-
-      Label(
-        osc_frame,
-        text="Frequency"
-      ).grid(row=1, column=0)
-
-      Label(
-        osc_frame,
-        textvariable=freq_tracker
-      ).grid(row=0, column=1)
-
-      Scale(
-        osc_frame,
-        variable=freq_tracker,
-        from_=20,
-        to=5000,
-        orient=tkinter.HORIZONTAL,
-        command=osc.set_frequency,
-        length=400
-      ).grid(row=1, column=1)
 
       phase_tracker = tkinter.DoubleVar()
       phase_tracker.set(float(osc.wave.phase))
