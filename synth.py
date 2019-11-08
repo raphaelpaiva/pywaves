@@ -48,7 +48,8 @@ class Synth(object):
 
   def _init_generator(self):
     self.oscilators = [
-      Oscilator(name="Sine", wave=Sinusoid(frequency=303.04429))
+      Oscilator(name="Sinusoid", wave=Sinusoid()),
+      Oscilator(name="Triangle", wave=Triangle()),
     ]
 
   def _init_sound_engine(self):
@@ -93,7 +94,7 @@ class Synth(object):
     for osc in self.oscilators:
       osc.set_frequency(freq)
     
-    waves = [copy.copy(o.wave) for o in self.oscilators]
+    waves = [o.wave for o in self.oscilators]
     voice_index = self.sampler.allocate_voice(waves)
 
     self.note_voice[note_number] = voice_index
