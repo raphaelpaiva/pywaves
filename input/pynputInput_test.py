@@ -3,7 +3,7 @@ from unittest import TestCase, main
 from pynput.keyboard import Key, KeyCode
 from collections import namedtuple
 from queue import Queue
-from input import KeyboardInput, EVT_KEY_PRESSED, EVT_KEY_RELEASED
+from input.keyboardInput import KeyboardInput, EVT_KEY_PRESSED, EVT_KEY_RELEASED
 
 class EventQueueMock(Queue):
   def __init__(self):
