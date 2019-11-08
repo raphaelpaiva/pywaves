@@ -16,7 +16,7 @@ class Sinusoid(object):
     rho = self.phase(t) if callable(self.phase) else self.phase
     samples = self.amplitude * self.func(w + rho)
     
-    return samples
+    return samples, t
 
   def __str__(self):
     return f"{self.amplitude} * {self.func.__name__}(2 * PI * {self.frequency} + {self.phase})"
@@ -39,4 +39,4 @@ class Triangle(Sinusoid):
     )
 
     samples = self.amplitude * samples
-    return samples
+    return samples, t

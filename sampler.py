@@ -23,11 +23,19 @@ class Sampler(object):
   def free_voice(self, voice_idx):
     self.voices[voice_idx] = None
 
+  def create_wave_sample(self, wave, duration, start_time=0.0):
+    t = np.arange(start_time, start_time + duration, 1/self.sample_rate)
+    w = 2 * np.pi * wave.frequency * t
+    rho = wave.phase(t) if callable(wave.phase) else wave.phase
+    samples = wave.amplitude * wave.func(w + rho)
+    
+    return samples
+
   def sample_waves(self, waves, duration, start_time=0.0):
     samples = []
     
     for wave in waves:
-      sample = wave.sample(duration, self.sample_rate, start_time)
+      sample = self.create_wave_sample(wave, duration, start_time)
       samples.append(sample)
     
     return self.mix(samples)

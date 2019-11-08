@@ -36,11 +36,11 @@ class Player(object):
     self.stream.write(normalized)
 
   def normalize(self, sample):
-    max_sample_value = numpy.max(sample)
-    ratio = self.volume / max_sample_value
-    norm = (ratio * sample).astype(self.format)
-    
-    return norm
+    return numpy.interp(  # Normalize the sample to range(0, 1)
+      sample,
+      (-1, 1),            # Original range from Sinewave
+      (0, self.volume)    # Target Range: 0 to Volume factor (1 is max)
+    ).astype(self.format)
 
   def set_volume(self, vol):
     self.volume = float(vol)
