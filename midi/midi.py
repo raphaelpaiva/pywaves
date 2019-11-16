@@ -15,6 +15,7 @@ midi_note_table = {
 
 ST_NOTE_OFF = 0x80
 ST_NOTE_ON  = 0x90
+ST_SYS_COM  = 0xF1
 
 EVT_MIDI    = 'midi_'
 
@@ -68,3 +69,5 @@ class MidiException(Exception):
     super().__init__(self, message)
 
     self.message = message
+
+SYSCOM_EXIT = MidiMessage(ST_SYS_COM, 0x0, 0x0)

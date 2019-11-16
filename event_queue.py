@@ -18,3 +18,11 @@ class Event(object):
     self.item = item
     self.timestamp = kwargs.get('timestamp')
     self.ancestor = kwargs.get('ancestor')
+  
+  def __str__(self):
+    timestamp = f'{self.timestamp}, ' if self.timestamp else ''
+    ancestor = str(self.ancestor) if self.ancestor else ''
+    
+    return f"{self.type}({str(self.item)} {timestamp} {ancestor})"
+
+DUMMY_EVT = Event(None, None)

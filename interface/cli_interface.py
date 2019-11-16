@@ -2,7 +2,7 @@ class CLInterface(object):
   def __init__(self, synth, **kwargs):
     self.synth = synth
   
-  def start(self):
+  def start(self, **kwargs):
     print("JustASynth!")
     print(f"""
     Channels:    {self.synth.player.channels}
@@ -13,3 +13,5 @@ class CLInterface(object):
     """)
   
   def update(self, osc, time_axis, sample, xlimits): pass
+
+  def stop(self): pass

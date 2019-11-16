@@ -1,4 +1,5 @@
 import tkinter
+import logging
 import numpy as np
 
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
@@ -13,17 +14,21 @@ from tkinter import TclError
 
 from .rotary import Knob
 
+LOGGER_NAME = 'TkInterface'
+
 class Window(Frame):
-  def __init__(self, synth, master=None):
+  def __init__(self, synth, log, master=None):
     Frame.__init__(
       self,
       master
     )
     
     self.master = master
+    self.log = log
+    
+    self.synth = synth
     self.player = synth.player
     self.sampler = synth.sampler
-
     self.oscilators = synth.oscilators
 
     self.lines = {}
@@ -209,15 +214,23 @@ class Window(Frame):
     self.axes[osc].set_xlim(xlimits)
 
 class TkInterface(object):
-  def __init__(self, synth):
+  def __init__(self, synth, log=None):
+    self.log = log.getChild(LOGGER_NAME) if log else logging.getLogger(LOGGER_NAME)
     self.root = tkinter.Tk()
     self.root.geometry("")
     
-    self.window = Window(synth, self.root)
+    self.window = Window(synth, self.log, self.root)
     self.window.after(0, self.window.update_canvas)
   
-  def start(self):
+  def start(self, exit_action=None):
+    if exit_action:
+      self.root.protocol("WM_DELETE_WINDOW", exit_action)
+    
     self.root.mainloop()
+
+  def stop(self):
+    self.window.destroy()
+    self.root.destroy()
 
   def update(self, osc, time_axis, sample, xlimits):
     self.window.update_osc_data(osc, time_axis, sample, xlimits)

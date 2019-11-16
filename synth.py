@@ -1,49 +1,32 @@
 import threading
 import copy
 from event_queue import (EventQueue, Event)
-from input.keyboardInput import (KeyboardInput, EVT_KEY, EVT_KEY_PRESSED, EVT_KEY_RELEASED)
 import midi
 import time
 import numpy as np
+import logging
 
 from sinusoud import (Sinusoid, Triangle)
 from oscilator import Oscilator
 from player import Player
 from sampler import Sampler
 
-keyboard_note_table = {
-  "q": ("E",  4),
-  "w": ("F",  4),
-  "3": ("F#", 4),
-  "e": ("G",  4),
-  "4": ("G#", 4),
-  "r": ("A",  4),
-  "5": ("A#", 4),
-  "t": ("B",  4),
-  "y": ("C",  5),
-  "7": ("C#", 5),
-  "u": ("D",  5),
-  "8": ("D#", 5),
-  "i": ("E",  5),
-  "o": ("F",  5),
-  "0": ("F#", 5),
-  "p": ("G",  5),
-  "-": ("G#", 5),
-}
+LOGGER_NAME = 'Synth'
+
+TERMINATE_EVT = Event(midi.EVT_MIDI, midi.SYSCOM_EXIT)
 
 class Synth(object):
-  def __init__(self):
-    self._init_input()
+  def __init__(self, log=None):
+    self.log = log.getChild(LOGGER_NAME) if log else logging.getLogger(LOGGER_NAME)
+
+    self._init_queue()
     self._init_generator()
     self._init_sound_engine()
     
     self.note_voice = {}
 
-  def _init_input(self):
+  def _init_queue(self):
     self.event_queue = EventQueue()
-    self.input = KeyboardInput(self.event_queue)
-
-    self.input.start()
 
   def _init_generator(self):
     self.oscilators = [
@@ -77,14 +60,23 @@ class Synth(object):
       self.player.play_sample(master)
 
       t += 1
+    
+    self.log.debug("Exited player loop.")
 
   def terminate(self):
+    self.log.debug('Terminating Synth...')
     self.stop = True
+    
+    self.log.debug('Stopping Player Thread...')
     self.player_thread.join()
-    self.queue_thread.join()
+    
+    self.log.debug('Terminating Player...')
     self.player.terminate()
-
-    self.input.stop()
+    
+    if threading.get_ident() != self.queue_thread.ident:
+      self.log.debug('Stopping Event Queue Thread...')
+      self.event_queue.put(TERMINATE_EVT)
+      self.queue_thread.join()
 
   def _evt_note_on(self, item):
     sample_size = self.player.sample_size
@@ -106,42 +98,23 @@ class Synth(object):
     voice_idx = self.note_voice[note_number]
     self.sampler.free_voice(voice_idx)
 
+  def _evt_syscom(self, item):
+    if item.data1 == 0 and item.data2 == 0:
+      self.log.debug('Got syscom_exit event.')
+      self.terminate()
+
   def process_queue(self):
     while not self.stop:
-      event = self.event_queue.get()
+      event = self.event_queue.get() # Blocking
 
-      if event is None:
-        continue
-      
       item = event.item
 
       if event.type == midi.EVT_MIDI:
+        if item.status == midi.ST_SYS_COM:
+          self._evt_syscom(item)
         if item.status == midi.ST_NOTE_ON:
           self._evt_note_on(item)
-        
         if item.status == midi.ST_NOTE_OFF:
           self._evt_note_off(item)
-
-      if event.type.startswith(EVT_KEY):
-        if item not in keyboard_note_table:
-          continue
-
-        note, octave = keyboard_note_table[item]
-        
-        if event.type == EVT_KEY_PRESSED:
-          new_event = Event(
-            midi.note_on(note, octave, 127),
-            midi.EVT_MIDI,
-            ancestor=event,
-            timestamp=time.time()
-          )
-
-        if event.type == EVT_KEY_RELEASED:
-          new_event = Event(
-            midi.note_off(note, octave, 127),
-            midi.EVT_MIDI,
-            ancestor=event,
-            timestamp=time.time()
-          )
-
-        self.event_queue.put(new_event)
+    
+    self.log.debug("Exited Event Queue loop.")
