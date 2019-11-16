@@ -21,8 +21,7 @@ class App(object):
     self.log.debug('Initializing Interface...')
     self.IfaceType = Iface
     self._init_interface()
-    
-    self.queue_thread.join()
+
     self.synth.terminate()
 
   def _init_interface(self):
@@ -31,8 +30,6 @@ class App(object):
   
   def _init_synth(self):
     self.synth = Synth()
-    self.queue_thread = threading.Thread(target=self.synth.process_queue)
-    self.queue_thread.start()
 
 def main():
   args = parse_args()
@@ -76,8 +73,6 @@ def parse_args():
   )
 
   return parser.parse_args()
-
-
 
 if __name__ == "__main__":
   main()

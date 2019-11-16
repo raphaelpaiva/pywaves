@@ -48,16 +48,18 @@ class Synth(object):
   def _init_generator(self):
     self.oscilators = [
       Oscilator(name="Sinusoid", wave=Sinusoid()),
-      Oscilator(name="Triangle", wave=Triangle()),
     ]
 
   def _init_sound_engine(self):
     self.player        = Player()
     self.sampler       = Sampler()
     self.player_thread = threading.Thread(target=self._continuous_play)
+    self.queue_thread = threading.Thread(target=self.process_queue)
 
     self.stop = False
+    
     self.player_thread.start()
+    self.queue_thread.start()
 
   def _continuous_play(self):
     t = 0
@@ -79,6 +81,7 @@ class Synth(object):
   def terminate(self):
     self.stop = True
     self.player_thread.join()
+    self.queue_thread.join()
     self.player.terminate()
 
     self.input.stop()
@@ -104,14 +107,11 @@ class Synth(object):
     self.sampler.free_voice(voice_idx)
 
   def process_queue(self):
-    while True:
+    while not self.stop:
       event = self.event_queue.get()
 
       if event is None:
         continue
-      
-      if event.item == 'esc':
-        break
       
       item = event.item
 
@@ -145,4 +145,3 @@ class Synth(object):
           )
 
         self.event_queue.put(new_event)
-
