@@ -173,7 +173,7 @@ def parse_args():
     '-i', '--interface',
     help="interface type",
     choices=interface_map.keys(),
-    default='cli'
+    default='tk'
   )
 
   return parser.parse_args()
