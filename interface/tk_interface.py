@@ -1,5 +1,6 @@
 import tkinter
 import logging
+import math
 import numpy as np
 
 from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
@@ -12,7 +13,7 @@ from tkinter.ttk import Scale
 from tkinter.ttk import Button
 from tkinter import TclError
 
-from .rotary import Knob
+from .widgets import (Knob, SynthFrame, KnobFrame)
 
 LOGGER_NAME = 'TkInterface'
 
@@ -49,14 +50,10 @@ class Window(Frame):
   def _create_window(self):
     self.master.title("JustASynth")
 
-    osc_frames = self._create_osc()
-    for frame in osc_frames:
-      frame.grid()
+    self._create_oscilator_section().pack(side=tkinter.LEFT)
+    self._create_master().pack(side=tkinter.LEFT)
 
-    master_frame = self._create_master()
-    master_frame.grid(row=0, column=1)
-
-    self.grid()
+    self.pack()
 
   def _create_master(self):
     master_frame = LabelFrame(
@@ -69,7 +66,7 @@ class Window(Frame):
     Label(
       master_frame,
       text="Volume"
-    ).grid()
+    ).pack()
 
     vol_tracker = tkinter.DoubleVar()
     vol_tracker.set(self.player.volume)
@@ -81,85 +78,59 @@ class Window(Frame):
       to=0.0,
       orient=tkinter.VERTICAL,
       command=self.player.set_volume,
-    ).grid()
+    ).pack()
 
     Label(
       master_frame,
       text=f"Channels: {self.player.channels}"
-    ).grid(sticky=tkinter.W)
+    ).pack()
 
     Label(
       master_frame,
       text=f"Sample Size: {self.player.sample_size}"
-    ).grid(sticky=tkinter.W)
+    ).pack()
 
     Label(
       master_frame,
       text=f"Sample Rate: {self.player.sample_rate}Hz"
-    ).grid(sticky=tkinter.W)
+    ).pack()
 
-    self._create_graph_frame("master", master_frame, ylim=(-1,1)).grid()
+    self._create_graph_frame("master", master_frame, ylim=(-1,1)).pack()
 
     return master_frame
 
-  def _create_osc(self):
-    osc_frames = []
+  def _create_oscilator_section(self):
+    osc_section = SynthFrame(self, "Oscilators")
 
     for osc in self.oscilators:
-      osc_frame = LabelFrame(
-        self,
-        text=osc.name,
-        relief=tkinter.GROOVE,
-        borderwidth=5
-      )
+      self._create_oscilator(osc_section, osc).pack()
 
-      phase_frame = LabelFrame(
-        osc_frame,
-        text="Phase",
-        relief=tkinter.GROOVE,
-        borderwidth=5
-      )
+    return osc_section
 
-      Knob(
-        phase_frame,
-        15,
-        width=2,
-        min_angle=-45,
-        max_angle=225,
-        max_value=12.566370614359172953850573533118,
-        min_value=0,
-        command=osc.set_phase
-      ).grid(row=3, column=1, sticky=tkinter.W)
-      
-      phase_frame.grid(row=0, column=1, sticky=tkinter.W)
+  def _create_oscilator(self, master, oscilator):
+    osc_frame = SynthFrame(
+      master,
+      text=oscilator.name
+    )
 
-      volume_frame = LabelFrame(
-        osc_frame,
-        text="Volume",
-        relief=tkinter.GROOVE,
-        borderwidth=5
-      )
+    self._create_graph_frame(oscilator, osc_frame).pack(side=tkinter.LEFT)
+    
+    KnobFrame(
+      osc_frame,
+      "Phase",
+      command=oscilator.set_phase,
+      max_value=2 * math.pi,
+      label_format=lambda x: f"{(x/math.pi):.2f}π"
+    ).pack(side=tkinter.LEFT)
+    
+    KnobFrame(
+      osc_frame,
+      "Volume",
+      command=oscilator.set_volume,
+      label_format="{:.2f}"
+    ).pack(side=tkinter.LEFT)
 
-      Knob(
-        volume_frame,
-        15,
-        width=2,
-        min_angle=-45,
-        max_angle=225,
-        max_value=1.0,
-        min_value=0.0,
-        command=osc.set_volume
-      ).grid(row=5, column=2, sticky=tkinter.W)
-
-      volume_frame.grid(row=0, column=2, sticky=tkinter.W)
-
-      graph_frame = self._create_graph_frame(osc, osc_frame)
-
-      graph_frame.grid(row=0, column=0)
-
-      osc_frames.append(osc_frame)
-
-    return osc_frames
+    return osc_frame
 
   def _create_graph_frame(self, osc, master_widget, ylim=(-1,1)):
     graph_frame = LabelFrame(
@@ -185,7 +156,7 @@ class Window(Frame):
 
     canvas = FigureCanvasTkAgg(fig, master=graph_frame)
     canvas.draw()
-    canvas.get_tk_widget().grid()
+    canvas.get_tk_widget().pack()
 
     self.canvas[osc] = canvas
 

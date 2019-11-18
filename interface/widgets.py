@@ -1,31 +1,28 @@
 import tkinter as tk
+from tkinter.ttk import Label
+from tkinter.ttk import LabelFrame
 import math
 
 class Knob(tk.Frame):
-  def __init__(self, parent, radius=25, lock=False, max_angle=360, min_angle=0, init_angle=None, step_ratio=1, min_value=0, max_value=360, show_label=True, label_fmt="{0:.2f}", command=None, **kwargs):
+  def __init__(self, parent, radius=25, lock=False, max_angle=360, min_angle=0, init_angle=None, step_ratio=1, command=None, **kwargs):
     size_adjust = 2
     diameter = 2 * radius
     size = diameter + size_adjust
 
     super().__init__(parent)
 
-    
     self.line = None
     self.min_angle = min_angle
     self.max_angle = max_angle
     self.step_ratio = step_ratio
-    self.min_value = min_value
-    self.max_value = max_value
     self.command = command
     
     self.center = (self.winfo_rootx() + radius + size_adjust, self.winfo_rooty() + radius + size_adjust)
     self.radius = radius
     self.angular_amplitude = max_angle - min_angle
-    self.value_amplitude = max_value - min_value
     
-    self.label_fmt = label_fmt
-    self.text = tk.StringVar()
     self.canvas = tk.Canvas(self, width=size, height=size)
+    self.canvas.pack()
     
     self.angle = init_angle if init_angle is not None else (self.min_angle + self.max_angle) / 2
     self._update_value(self.angle)
@@ -34,12 +31,6 @@ class Knob(tk.Frame):
       self.lock=True
     else:
       self.lock = lock
-
-    self.canvas.pack()
-    
-    if show_label:
-      self.label = tk.Label(self, textvariable=self.text, borderwidth=1, relief="solid")
-      self.label.pack()
 
     self._draw_circle(**kwargs)
     self._draw_line(**kwargs)
@@ -52,7 +43,7 @@ class Knob(tk.Frame):
     cx, cy = self.center
     r = self.radius
 
-    self.circle = self.canvas.create_oval(cx - r, cy - r, cx + r, cy + r, **kwargs)
+    self.circle = self.canvas.create_oval(cx - r, cy - r, cx + r, cy + r)
 
   def _calculate_line_coordinates(self):
     cx, cy = self.center
@@ -67,7 +58,7 @@ class Knob(tk.Frame):
 
   def _draw_line(self, **kwargs):
     if self.line is None:
-      self.line = self.canvas.create_line(*self._calculate_line_coordinates(), **kwargs)
+      self.line = self.canvas.create_line(*self._calculate_line_coordinates())
     else:
       self.canvas.coords(self.line, *self._calculate_line_coordinates())
 
@@ -86,15 +77,15 @@ class Knob(tk.Frame):
   def _update_value(self, new_angle):
     angular_step  = new_angle - self.min_angle            # how far away is the new angle from the minimum?
     angular_ratio = angular_step / self.angular_amplitude # how much of the total is this step?
-    new_value = self.value_amplitude * angular_ratio      # The value must vary at the same rate as the angle
+    new_value = angular_ratio                             # The value must vary at the same rate as the angle  
     
-    if new_value > self.max_value:
-      new_value = self.max_value
-    if new_value < self.min_value:
-      new_value = self.min_value
-    
+    if new_value < 0:
+      new_value = 0
+    if new_value > 1.0:
+      new_value = 1
+
     self.value = new_value
-    self.text.set(self.label_fmt.format(self.value))
+    
     if self.command:
       self.command(self.value)
 
@@ -104,19 +95,54 @@ class Knob(tk.Frame):
   def set_angle(self, angle):
     self.angle = max(self.min_angle, min(angle, self.max_angle)) if self.lock else angle % (abs(self.max_angle) - abs(self.min_angle))
 
-def main():
-  root = tk.Tk()
-  root.geometry("")
+class SynthFrame(LabelFrame):
+  """ Just a tk.LabelFrame with Groove relief and 5px borderwidth"""
+  def __init__(self, master, text):
+    super().__init__(
+      master,
+      text=text,
+      relief=tk.GROOVE,
+      borderwidth=5
+    )
 
-  r = 25
+class KnobFrame(SynthFrame):
+  def __init__(self, master, name="Knob", command=None, max_value=1.0, label_format=None, invert_value=True):
+    super().__init__(
+      master,
+      name
+    )
 
-  k1 = Knob(root, 10, width=2, min_angle=-45, max_angle=225, max_value=100, min_value=0)
-  k1.pack()
+    self.command = command
+    self.max_value = max_value
+    self.label_format = label_format
+    self.invert_value = invert_value
+    
+    self.text_var = tk.StringVar()
 
-  k2 = Knob(root, r, width=2, min_value=0, max_value=100, lock=True, show_label=False)
-  k2.pack()
+    Knob(
+      self,
+      15,
+      min_angle=-45,
+      max_angle=225,
+      command=self._update_value
+    ).pack()
+    
+    Label(self, textvariable=self.text_var, borderwidth=1, relief="solid").pack()
 
-  root.mainloop()
+  def _update_value(self, knob_value):
+    if self.invert_value:
+      value = (1.0 - knob_value) * self.max_value
+    else:
+      value = knob_value * self.max_value
+    
+    self.command(value)
+    
+    lbl_val = value
+    
+    if self.label_format is not None:
+      if callable(self.label_format):
+        lbl_val = self.label_format(value)
+      elif isinstance(self.label_format, str):
+        lbl_val = self.label_format.format(value)
 
-if __name__ == "__main__":
-  main()
+    self.text_var.set(lbl_val)
