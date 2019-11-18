@@ -55,9 +55,6 @@ class Synth(object):
 
       master = self.sampler.get_master(duration, time)
       
-      master_time = np.arange(len(master))
-      master_limits = (0, len(master_time))
-      
       self.player.play_sample(master)
 
       t += 1
