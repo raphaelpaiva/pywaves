@@ -1,10 +1,34 @@
 # pywaves [![Build Status](https://travis-ci.org/raphaelpaiva/pywaves.svg?branch=master)](https://travis-ci.org/raphaelpaiva/pywaves)
 A Python Midi-capable Software Synthesizer
 
-pyAudio is a requirement, thus, unless you have it installed in your python 3.7, this project requires python ~3.6
+![TKInterface-Snapshot](./doc/tkinterface.png)
+
+Requirements
+------------
+### Python Version: 3.6+
+
+### **Notice**: PortAudio dependency
+**TL;DR**: You may need to `apt install libportaudio2` or the equivallent in your distro.
+
+This project uses [python-sounddevice](https://github.com/spatialaudio/python-sounddevice), a [PortAudio](http://www.portaudio.com/) binding library. sounddevice is installed via `requirements.txt`, but PortAudio may need to be installed in your system. It is compatible with Windows out-of-the box, but not with some Linux distros, but it is not hard to find it in your package manager.
+
+---
+
+With that out of the way, just use pip:
+
+```pip install -r requirements.txt```
+
+Running
+-------
 
 ```bash
 $ python app.py
+```
+
+For more options:
+
+```bash
+$ python app.py --help
 ```
 
 Main goals are:
