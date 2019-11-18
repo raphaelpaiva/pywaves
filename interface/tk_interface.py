@@ -1,19 +1,12 @@
 import tkinter
 import logging
-import math
-import numpy as np
-
-from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
-from matplotlib.figure import Figure
 
 from tkinter.ttk import Frame
 from tkinter.ttk import Label
 from tkinter.ttk import LabelFrame
 from tkinter.ttk import Scale
-from tkinter.ttk import Button
-from tkinter import TclError
 
-from .widgets import (Knob, SynthFrame, KnobFrame)
+from .widgets import (Knob, SynthFrame, KnobFrame, VisualizationFrame, OscilatorFrame)
 
 LOGGER_NAME = 'TkInterface'
 
@@ -32,18 +25,8 @@ class Window(Frame):
     self.sampler = synth.sampler
     self.oscilators = synth.oscilators
 
-    self.lines = {}
-    self.canvas = {}
-    self.axes = {}
-
-    for osc in self.oscilators:
-      self.lines[osc] = None
-      self.canvas[osc] = None
-      self.axes[osc] = None
-
-    self.lines["master"] = None
-    self.canvas["master"] = None
-    self.axes["master"] = None
+    self.plot_frames = []
+    self.update_frames = []
 
     self._create_window()
 
@@ -95,7 +78,10 @@ class Window(Frame):
       text=f"Sample Rate: {self.player.sample_rate}Hz"
     ).pack()
 
-    self._create_graph_frame("master", master_frame, ylim=(-1,1)).pack()
+    graph_frame = self._create_graph_frame(master_frame, lambda: self.player.master_sample)
+    graph_frame.pack()
+    
+    self.plot_frames.append(graph_frame)
 
     return master_frame
 
@@ -103,86 +89,38 @@ class Window(Frame):
     osc_section = SynthFrame(self, "Oscilators")
 
     for osc in self.oscilators:
-      self._create_oscilator(osc_section, osc).pack()
+      osc_frame = self._create_oscilator(osc_section, osc)
+      osc_frame.pack()
+      self.update_frames.append(osc_frame)
 
     return osc_section
 
   def _create_oscilator(self, master, oscilator):
-    osc_frame = SynthFrame(
+    osc_frame = OscilatorFrame(
       master,
-      text=oscilator.name
+      oscilator,
+      self.sampler.sample_size / self.sampler.sample_rate,
+      self.sampler.sample_rate
     )
-
-    self._create_graph_frame(oscilator, osc_frame).pack(side=tkinter.LEFT)
-    
-    KnobFrame(
-      osc_frame,
-      "Phase",
-      command=oscilator.set_phase,
-      max_value=2 * math.pi,
-      label_format=lambda x: f"{(x/math.pi):.2f}π"
-    ).pack(side=tkinter.LEFT)
-    
-    KnobFrame(
-      osc_frame,
-      "Volume",
-      command=oscilator.set_volume,
-      label_format="{:.2f}"
-    ).pack(side=tkinter.LEFT)
 
     return osc_frame
 
-  def _create_graph_frame(self, osc, master_widget, ylim=(-1,1)):
-    graph_frame = LabelFrame(
-        master_widget,
-        text="Graph",
-        relief=tkinter.GROOVE,
-        borderwidth=5
-      )
-
-    fig = Figure((2,1))
-
-    ax = fig.add_subplot(111)
-    self.axes[osc] = ax
-
-    line, = ax.plot(0)
-
-    ax.set_xlim((0, 1/self.player.sample_rate))
-    ax.set_ylim(ylim)
-    ax.set_xticks([])
-    ax.set_yticks([])
-
-    self.lines[osc] = line
-
-    canvas = FigureCanvasTkAgg(fig, master=graph_frame)
-    canvas.draw()
-    canvas.get_tk_widget().pack()
-
-    self.canvas[osc] = canvas
+  def _create_graph_frame(self, master, data_source):
+    graph_frame = VisualizationFrame(
+      master,
+      data_source
+    )
 
     return graph_frame
 
   def update_canvas(self):
-    master_data = self.player.master_sample
-
-    if master_data is not None:
-      self.update_osc_data('master', np.arange(len(master_data)), master_data)
+    for frame in self.plot_frames:
+      frame.plot()
     
-    for canvas in self.canvas.values():
-      try:
-        canvas.draw()
-        canvas.flush_events()
-      except TclError:
-        break
+    for frame in self.plot_frames + self.update_frames:
+      frame.update_canvas()
 
     self.after(0, self.update_canvas)
-
-  def update_osc_data(self, osc, time_axis, sample, xlimits=None):
-    if xlimits is None:
-      xlimits = (0, len(sample))
-    
-    self.lines[osc].set_data(time_axis, sample)
-    self.axes[osc].set_xlim(xlimits)
 
 class TkInterface(object):
   def __init__(self, synth, log=None):
@@ -203,5 +141,4 @@ class TkInterface(object):
     self.window.destroy()
     self.root.destroy()
 
-  def update(self, osc, time_axis, sample, xlimits):
-    self.window.update_osc_data(osc, time_axis, sample, xlimits)
+  def update(self, osc, time_axis, sample, xlimits): pass

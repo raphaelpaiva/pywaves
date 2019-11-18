@@ -1,7 +1,12 @@
 import tkinter as tk
-from tkinter.ttk import Label
-from tkinter.ttk import LabelFrame
+from tkinter import ttk
+
 import math
+
+import numpy as np
+
+from matplotlib.backends.backend_tkagg import (FigureCanvasTkAgg, NavigationToolbar2Tk)
+from matplotlib.figure import Figure
 
 class Knob(tk.Frame):
   def __init__(self, parent, radius=25, lock=False, max_angle=360, min_angle=0, init_angle=None, step_ratio=1, command=None, **kwargs):
@@ -95,8 +100,8 @@ class Knob(tk.Frame):
   def set_angle(self, angle):
     self.angle = max(self.min_angle, min(angle, self.max_angle)) if self.lock else angle % (abs(self.max_angle) - abs(self.min_angle))
 
-class SynthFrame(LabelFrame):
-  """ Just a tk.LabelFrame with Groove relief and 5px borderwidth"""
+class SynthFrame(ttk.LabelFrame):
+  """ Just a ttk.LabelFrame with Groove relief and 5px borderwidth"""
   def __init__(self, master, text):
     super().__init__(
       master,
@@ -127,7 +132,7 @@ class KnobFrame(SynthFrame):
       command=self._update_value
     ).pack()
     
-    Label(self, textvariable=self.text_var, borderwidth=1, relief="solid").pack()
+    ttk.Label(self, textvariable=self.text_var, borderwidth=1, relief="solid").pack()
 
   def _update_value(self, knob_value):
     if self.invert_value:
@@ -146,3 +151,75 @@ class KnobFrame(SynthFrame):
         lbl_val = self.label_format.format(value)
 
     self.text_var.set(lbl_val)
+
+class VisualizationFrame(SynthFrame):
+  def __init__(self, master, data, name="Visualization"):
+    super().__init__(master, name)
+    self.data = data
+    self._init_plot_components()
+  
+  def _init_plot_components(self):
+    fig = Figure((2,1))
+
+    self.ax = fig.add_subplot(111)
+    self.line, = self.ax.plot(0)
+    self.canvas = FigureCanvasTkAgg(fig, master=self)
+
+    self.ax.set_xlim((0, 1))
+    self.ax.set_ylim((-1,1))
+    self.ax.set_xticks([])
+    self.ax.set_yticks([])
+    
+    self.canvas.get_tk_widget().pack()
+
+  def plot(self):
+    data = self.data() if callable(self.data) else self.data
+    
+    data_size = len(data)
+    time_axis = np.arange(data_size)
+    xlimits = (0, data_size)
+
+    self.line.set_data(time_axis, data)
+    self.ax.set_xlim(xlimits)
+
+  def update_canvas(self):
+    try:
+      self.canvas.draw()
+      self.canvas.flush_events()
+    except tk.TclError:
+      pass
+
+class OscilatorFrame(SynthFrame):
+  def __init__(self, master, oscilator, vizualization_duration, vizualization_sample_rate):
+    super().__init__(master, oscilator.name)
+    self.oscilator = oscilator
+    
+    data_source = lambda: oscilator.wave.sample(vizualization_duration, vizualization_sample_rate)
+    self.graph_frame = VisualizationFrame(self, data_source)
+    self.graph_frame.pack(side=tk.LEFT)
+    
+    KnobFrame(
+      self,
+      "Phase",
+      command=self.update_phase,
+      max_value=2 * math.pi,
+      label_format=lambda x: f"{(x/math.pi):.2f}π"
+    ).pack(side=tk.LEFT)
+    
+    KnobFrame(
+      self,
+      "Volume",
+      command=self.update_volume,
+      label_format="{:.2f}"
+    ).pack(side=tk.LEFT)
+  
+  def update_phase(self, value):
+    self.oscilator.set_phase(value)
+    self.graph_frame.plot()
+  
+  def update_volume(self, value):
+    self.oscilator.set_volume(value)
+    self.graph_frame.plot()
+  
+  def update_canvas(self):
+    self.graph_frame.update_canvas()
