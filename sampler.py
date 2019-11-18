@@ -23,10 +23,12 @@ class Sampler(object):
   def free_voice(self, voice_idx):
     self.voices[voice_idx] = None
 
-  def sample_waves(self, waves, duration, start_time=0.0):
+  def sample_waves(self, payload, duration, start_time=0.0):
     samples = []
+    waves, freq = payload
     
     for wave in waves:
+      wave.frequency = freq
       sample = wave.sample(duration, self.sample_rate, start_time)
       samples.append(sample)
     

@@ -30,7 +30,8 @@ class Synth(object):
 
   def _init_generator(self):
     self.oscilators = [
-      Oscilator(name="Sinusoid", wave=Sinusoid()),
+      Oscilator(name="Sinusoid 1", wave=Sinusoid()),
+      Oscilator(name="Triangle 1", wave=Triangle()),
     ]
 
   def _init_sound_engine(self):
@@ -79,17 +80,11 @@ class Synth(object):
       self.queue_thread.join()
 
   def _evt_note_on(self, item):
-    sample_size = self.player.sample_size
-    sample_rate = self.player.sample_rate
-    duration    = sample_size / sample_rate
-    
     note_number = item.data1
     freq = midi.midi_number_to_freq(note_number)
-    for osc in self.oscilators:
-      osc.set_frequency(freq)
     
     waves = [o.wave for o in self.oscilators]
-    voice_index = self.sampler.allocate_voice(waves)
+    voice_index = self.sampler.allocate_voice((waves, freq))
 
     self.note_voice[note_number] = voice_index
   
