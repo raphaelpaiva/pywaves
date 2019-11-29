@@ -3,3 +3,4 @@ numpy
 scipy
 keyboard
 sounddevice
+psutil

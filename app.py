@@ -3,11 +3,14 @@ import threading
 import argparse
 import logging
 import midi
+import psutil
 
 from interface import (CLInterface, TkInterface)
 from input.keyboardInput import (KeyboardInput, EVT_KEY, EVT_KEY_PRESSED, EVT_KEY_RELEASED)
 from event_queue import (EventQueue, Event)
 from synth import Synth
+
+from observer import Observer
 
 LOGGER_NAME = 'app'
 interface_map = {
@@ -47,17 +50,26 @@ event_type_midi_action = {
 }
 
 class App(object):
-  def __init__(self, Iface, *args, **kwargs):
+  def __init__(self, Iface, arguments, *args, **kwargs):
     super(App).__init__(*args, **kwargs)
+    
+    self.args = arguments
     self.stop = False
     self.log = logging.getLogger(LOGGER_NAME)
+
+    self.process = psutil.Process()
+    self.process.cpu_percent() # required first call
+    self.observer = Observer()
+    self.observer.add('app', self)
+    self.observer_thread = threading.Thread(target=self._observer_loop, name="Observer")
+    self.observer_thread.start()
 
     self.log.debug('Initializing Input...')
     self._init_input()
     
     self.log.debug('Initializing synth...')
     self._init_synth()
-    
+
     self.log.debug('Initializing Interface...')
     self.IfaceType = Iface
     self._init_interface()
@@ -67,7 +79,7 @@ class App(object):
     self.input = KeyboardInput(self.input_queue)
     self.input.start()
     
-    self.input_thread = threading.Thread(target=self._process_input_queue)
+    self.input_thread = threading.Thread(target=self._process_input_queue, name="input_queue")
     self.input_thread.start()
 
   def _process_input_queue(self):
@@ -106,7 +118,7 @@ class App(object):
     self.log.debug('Exiting input Thread loop...')
 
   def _init_interface(self):
-    self.interface = self.IfaceType(self.synth, log=self.log)
+    self.interface = self.IfaceType(self.synth, log=self.log, debug=self.args.debug)
     self.interface.start(exit_action=self.exit)
   
   def _init_synth(self):
@@ -130,10 +142,31 @@ class App(object):
     self.log.debug("Terminating Interface...")
     self.interface.stop()
 
+    self.log.debug("Terminating Observer Thread...")
+    self.observer_thread.join()
+
     self.log.debug("Finished terminating app!")
   
   def exit(self):
     self.input_queue.put(EXIT_EVENT)
+
+  def _observer_loop(self):
+    while not self.stop:
+      print(self.observer.observe())
+      time.sleep(2.0)
+
+  def observe(self):
+    p = self.process
+    with p.oneshot():
+      return {
+        'pid': p.pid,
+        'name': p.name(),
+        'cpu_percent': p.cpu_percent() / psutil.cpu_count(),
+        'num_threads': p.num_threads(),
+        'threads': p.threads(),
+        'memory': float(p.memory_info().rss / (1024 * 1024)),
+        'memory_percent': p.memory_percent(),
+      }
 
 def main():
   args = parse_args()
@@ -142,7 +175,7 @@ def main():
   log.debug(f'Using {Iface} as the interface type')
   
   log.debug(f'Initializing App...')
-  App(Iface)
+  App(Iface, args)
   log.debug(f'Bye ;)')
 
 def get_interface_type(args):

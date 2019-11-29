@@ -7,6 +7,7 @@ from tkinter.ttk import LabelFrame
 from tkinter.ttk import Scale
 
 from .widgets import (Knob, SynthFrame, KnobFrame, VisualizationFrame, OscilatorFrame)
+from interface.tk_debug_window import DebugWindow
 
 LOGGER_NAME = 'TkInterface'
 
@@ -16,7 +17,7 @@ class Window(Frame):
       self,
       master
     )
-    
+
     self.master = master
     self.log = log
     
@@ -123,10 +124,13 @@ class Window(Frame):
     self.after(0, self.update_canvas)
 
 class TkInterface(object):
-  def __init__(self, synth, log=None):
+  def __init__(self, synth, log=None, debug=False):
     self.log = log.getChild(LOGGER_NAME) if log else logging.getLogger(LOGGER_NAME)
     self.root = tkinter.Tk()
     self.root.geometry("")
+
+    if debug:
+      self.debug_window = DebugWindow(tkinter.Toplevel(self.root), synth)
     
     self.window = Window(synth, self.log, self.root)
     self.window.after(0, self.window.update_canvas)
@@ -138,7 +142,9 @@ class TkInterface(object):
     self.root.mainloop()
 
   def stop(self):
+    self.log.debug("Destroying Window...")
     self.window.destroy()
+    self.log.debug("Destroying TK Root...")
     self.root.destroy()
 
   def update(self, osc, time_axis, sample, xlimits): pass
