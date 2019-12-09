@@ -74,6 +74,8 @@ class App(object):
     while not self.stop:
       event = self.input_queue.get() # Blocking
       
+      self.log.debug(f'Got event {event}')
+
       item = event.item
 
       if event.type.startswith(EVT_SYS):
@@ -152,7 +154,7 @@ def init_log(args):
   if args.debug:
     logging.basicConfig(
       level=logging.DEBUG,
-      format="%(asctime)s [%(name)s] %(levelname)s: %(message)s",
+      format="%(asctime)s [%(name)s (%(threadName)s)] %(levelname)s: %(message)s",
       datefmt="%d/%m/%Y %H:%M:%S"
     )
 
