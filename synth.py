@@ -36,29 +36,45 @@ class Synth(object):
 
   def _init_sound_engine(self):
     self.player        = Player()
-    self.sampler       = Sampler()
-    self.player_thread = threading.Thread(target=self._continuous_play)
-    self.queue_thread = threading.Thread(target=self.process_queue)
+    self.sampler       = Sampler(log=self.log)
+    self.sample_queue  = EventQueue(3)
+    
+    self.player_thread  = threading.Thread(name='SyPlayerT', target=self._continuous_play)
+    self.sampler_thread = threading.Thread(name='SySamplerT',target=self._continuous_sample)
+    self.queue_thread   = threading.Thread(name='SyQueueT', target=self.process_queue)
 
     self.stop = False
     
     self.player_thread.start()
+    self.sampler_thread.start()
     self.queue_thread.start()
 
-  def _continuous_play(self):
+  def _continuous_sample(self):
     t = 0
     while not self.stop:
-      sample_size = self.player.sample_size
-      sample_rate = self.player.sample_rate
+      sample_size = self.sampler.sample_size
+      sample_rate = self.sampler.sample_rate
       duration    = sample_size / sample_rate
       time        = t * duration
 
       master = self.sampler.get_master(duration, time)
-      
-      self.player.play_sample(master)
 
-      t += 1
-    
+      if len(master) > 0:
+        self.log.debug(f'Putting {len(master)}')
+        self.sample_queue.put(master, 'sample')
+        t += 1
+      else:
+        t = 0
+
+  def _continuous_play(self):
+    while not self.stop:
+      try:
+        event = self.sample_queue.get(timeout=1)
+        master = event.item
+        self.log.debug(f'Sample Queue Size {self.sample_queue.qsize()}')
+        self.player.play_sample(master)
+      except Exception as e: pass
+
     self.log.debug("Exited player loop.")
 
   def terminate(self):
@@ -68,6 +84,9 @@ class Synth(object):
     self.log.debug('Stopping Player Thread...')
     self.player_thread.join()
     
+    self.log.debug('Stopping Sampler Thread...')
+    self.sampler_thread.join()
+
     self.log.debug('Terminating Player...')
     self.player.terminate()
     
@@ -84,11 +103,13 @@ class Synth(object):
     voice_index = self.sampler.allocate_voice((waves, freq))
 
     self.note_voice[note_number] = voice_index
+    self.log.debug(f'Processed note_on event: #{note_number}, {freq}Hz, Voice {voice_index}')
   
   def _evt_note_off(self, item):
     note_number = item.data1
     voice_idx = self.note_voice[note_number]
     self.sampler.free_voice(voice_idx)
+    self.log.debug(f'Processed note_off event: #{note_number}, Voice {voice_idx}')
 
   def _evt_syscom(self, item):
     if item.data1 == 0 and item.data2 == 0:
@@ -98,6 +119,7 @@ class Synth(object):
   def process_queue(self):
     while not self.stop:
       event = self.event_queue.get() # Blocking
+      self.log.debug(f'Got event {event}')
 
       item = event.item
 
