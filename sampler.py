@@ -1,7 +1,12 @@
 import numpy as np
+import logging
+
+LOGGER_NAME = 'Sampler'
 
 class Sampler(object):
-  def __init__(self, sample_rate=44100, sample_size=1024, num_voices=8):
+  def __init__(self, sample_rate=44100, sample_size=512, num_voices=8, log=None):
+    self.log = log.getChild(LOGGER_NAME) if log else logging.getLogger(LOGGER_NAME)
+    
     self.num_voices = num_voices
     self.sample_size = sample_size
     self.sample_rate = sample_rate
@@ -18,10 +23,13 @@ class Sampler(object):
     voice_idx = self._get_first_avilable_voice()
     self.voices[voice_idx] = payload
     
+    self.log.debug(f'Allocating voice {voice_idx} with {payload}')
     return voice_idx
   
   def free_voice(self, voice_idx):
+    self.log.debug(f'Freeing voice {voice_idx}')
     self.voices[voice_idx] = None
+    self.log.debug(f'Voice Status: {self.voices}')
 
   def sample_waves(self, payload, duration, start_time=0.0):
     samples = []
@@ -42,6 +50,9 @@ class Sampler(object):
   def mix(self, samples):
       if not samples:
         return []
+
+      self.log.debug(f'Voice Status: {self.voices}')
+      self.log.debug(f'Mixing {len(samples)} samples')
 
       final = np.zeros(self.sample_size)
       
