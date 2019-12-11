@@ -4,7 +4,7 @@ import logging
 LOGGER_NAME = 'Sampler'
 
 class Sampler(object):
-  def __init__(self, sample_rate=44100, sample_size=512, num_voices=8, log=None):
+  def __init__(self, sample_rate=44100, sample_size=1024, num_voices=8, log=None):
     self.log = log.getChild(LOGGER_NAME) if log else logging.getLogger(LOGGER_NAME)
     
     self.num_voices = num_voices

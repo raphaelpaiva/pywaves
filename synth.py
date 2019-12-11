@@ -19,6 +19,8 @@ class Synth(object):
   def __init__(self, log=None):
     self.log = log.getChild(LOGGER_NAME) if log else logging.getLogger(LOGGER_NAME)
 
+    self.sampling_lock = threading.Condition()
+    
     self._init_queue()
     self._init_generator()
     self._init_sound_engine()
@@ -37,7 +39,7 @@ class Synth(object):
   def _init_sound_engine(self):
     self.player        = Player()
     self.sampler       = Sampler(log=self.log)
-    self.sample_queue  = EventQueue(3)
+    self.sample_queue  = EventQueue(2)
     
     self.player_thread  = threading.Thread(name='SyPlayerT', target=self._continuous_play)
     self.sampler_thread = threading.Thread(name='SySamplerT',target=self._continuous_sample)
@@ -65,6 +67,8 @@ class Synth(object):
         t += 1
       else:
         t = 0
+        with self.sampling_lock:
+          self.sampling_lock.wait()
 
   def _continuous_play(self):
     while not self.stop:
@@ -85,6 +89,8 @@ class Synth(object):
     self.player_thread.join()
     
     self.log.debug('Stopping Sampler Thread...')
+    with self.sampling_lock:
+      self.sampling_lock.notify()
     self.sampler_thread.join()
 
     self.log.debug('Terminating Player...')
@@ -101,6 +107,8 @@ class Synth(object):
     
     waves = [o.wave for o in self.oscilators]
     voice_index = self.sampler.allocate_voice((waves, freq))
+    with self.sampling_lock:
+      self.sampling_lock.notify()
 
     self.note_voice[note_number] = voice_index
     self.log.debug(f'Processed note_on event: #{note_number}, {freq}Hz, Voice {voice_index}')
