@@ -4,11 +4,11 @@ import logging
 LOGGER_NAME = 'Sampler'
 
 class Sampler(object):
-  def __init__(self, sample_rate=44100, sample_size=1024, num_voices=8, log=None):
+  def __init__(self, sample_rate=44100, buffer_size=1024, num_voices=8, log=None):
     self.log = log.getChild(LOGGER_NAME) if log else logging.getLogger(LOGGER_NAME)
     
     self.num_voices = num_voices
-    self.sample_size = sample_size
+    self.buffer_size = buffer_size
     self.sample_rate = sample_rate
     self.voices = [None] * num_voices
 
@@ -43,9 +43,16 @@ class Sampler(object):
     return self.mix(samples)
 
   def get_master(self, duration, start_time=0.0):
-    samples = [self.sample_waves(w, duration, start_time) for w in self.voices if w is not None]
+    allocated_voices = [v for v in self.voices if v is not None]
     
-    return self.mix(samples)
+    if not allocated_voices:
+      return []
+    else:
+      time = np.arange(start_time, start_time + duration, 1/self.sample_rate)
+      
+      voices_summation = lambda t: sum([sum([osc.evaluate(t, v[1]) for osc in v[0]]) for v in allocated_voices])
+
+      return np.array([voices_summation(t) for t in time])
 
   def mix(self, samples):
       if not samples:
@@ -54,7 +61,7 @@ class Sampler(object):
       self.log.debug(f'Voice Status: {self.voices}')
       self.log.debug(f'Mixing {len(samples)} samples')
 
-      final = np.zeros(self.sample_size)
+      final = np.zeros(self.buffer_size)
       
       for sample in samples:
         work_sample = sample

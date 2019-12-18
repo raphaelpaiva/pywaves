@@ -1,11 +1,12 @@
 import threading
 import copy
-from event_queue import (EventQueue, Event)
 import midi
 import time
 import numpy as np
 import logging
+import math
 
+from event_queue import (EventQueue, Event)
 from sinusoud import (Sinusoid, Triangle)
 from oscilator import Oscilator
 from player import Player
@@ -32,8 +33,8 @@ class Synth(object):
 
   def _init_generator(self):
     self.oscilators = [
-      Oscilator(name="Sinusoid 1", wave=Sinusoid()),
-      Oscilator(name="Triangle 1", wave=Triangle()),
+      Oscilator(name="Sinusoid 1", wave_function=math.sin),
+      Oscilator(name="Triangle 1", wave_function=math.sin),
     ]
 
   def _init_sound_engine(self):
@@ -54,7 +55,7 @@ class Synth(object):
   def _continuous_sample(self):
     t = 0
     while not self.stop:
-      sample_size = self.sampler.sample_size
+      sample_size = self.sampler.buffer_size
       sample_rate = self.sampler.sample_rate
       duration    = sample_size / sample_rate
       time        = t * duration
@@ -104,9 +105,7 @@ class Synth(object):
   def _evt_note_on(self, item):
     note_number = item.data1
     freq = midi.midi_number_to_freq(note_number)
-    
-    waves = [o.wave for o in self.oscilators]
-    voice_index = self.sampler.allocate_voice((waves, freq))
+    voice_index = self.sampler.allocate_voice((self.oscilators, freq))
     with self.sampling_lock:
       self.sampling_lock.notify()
 
