@@ -16,7 +16,7 @@ class Oscilator(BaseOscilator):
     self.parameters = {
       'volume': Parameter('volume'),
       'detune': Parameter('detune', min_value=-12, max_value=12),
-      'phase': Parameter('phase', max_value=2 * math.pi),
+      'phase': Parameter('phase', max_value=2 * math.pi, label_format=lambda x: f"{(x/math.pi):.2f}π"),
     }
   
   def evaluate(self, t, freq):
@@ -27,7 +27,7 @@ class Oscilator(BaseOscilator):
     return amplitude * self.wave_function(2 * math.pi * (freq + detune) * t + phase)
 class Parameter(object):
   """ A parameter[name, relative_value]. relative_value is a float between 0 and 1 where 0 is minimum and 1 is maximum value. For absolute values (defined by min_value and max_value), use get(). """
-  def __init__(self, name, min_value=0.0, max_value=1.0, init_value=0.5):
+  def __init__(self, name, min_value=0.0, max_value=1.0, init_value=0.5, label_format=None):
     super().__init__()
     
     self.name = name
@@ -35,6 +35,7 @@ class Parameter(object):
     self.relative_value = init_value
     self.max_value = max_value
     self.min_value = min_value
+    self.label_format = label_format
 
   def get(self):
     """ Returns the absolute value of this parameter, based on the minimum and maximum values. """

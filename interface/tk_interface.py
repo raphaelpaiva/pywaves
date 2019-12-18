@@ -70,7 +70,7 @@ class Window(Frame):
 
     Label(
       master_frame,
-      text=f"Sample Size: {self.player.sample_size}"
+      text=f"Buffer Size: {self.sampler.buffer_size}"
     ).pack()
 
     Label(
@@ -91,7 +91,7 @@ class Window(Frame):
     for osc in self.oscilators:
       osc_frame = self._create_oscilator(osc_section, osc)
       osc_frame.pack()
-      self.update_frames.append(osc_frame)
+      #self.update_frames.append(osc_frame)
 
     return osc_section
 
@@ -99,7 +99,7 @@ class Window(Frame):
     osc_frame = OscilatorFrame(
       master,
       oscilator,
-      self.sampler.sample_size / self.sampler.sample_rate,
+      self.sampler.buffer_size / self.sampler.sample_rate,
       self.sampler.sample_rate
     )
 

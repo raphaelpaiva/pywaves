@@ -175,12 +175,13 @@ class VisualizationFrame(SynthFrame):
   def plot(self):
     data = self.data() if callable(self.data) else self.data
     
-    data_size = len(data)
-    time_axis = np.arange(data_size)
-    xlimits = (0, data_size)
+    if data is not None:
+      data_size = len(data)
+      time_axis = np.arange(data_size)
+      xlimits = (0, data_size)
 
-    self.line.set_data(time_axis, data)
-    self.ax.set_xlim(xlimits)
+      self.line.set_data(time_axis, data)
+      self.ax.set_xlim(xlimits)
 
   def update_canvas(self):
     try:
@@ -198,28 +199,14 @@ class OscilatorFrame(SynthFrame):
     self.graph_frame = VisualizationFrame(self, data_source)
     self.graph_frame.pack(side=tk.LEFT)
     
-    KnobFrame(
+    for parameter in oscilator.parameters.values():
+      KnobFrame(
       self,
-      "Phase",
-      command=self.update_phase,
-      max_value=2 * math.pi,
-      label_format=lambda x: f"{(x/math.pi):.2f}π"
+      parameter.name,
+      command=parameter.set_relative,
+      max_value=parameter.max_value,
+      label_format=parameter.label_format
     ).pack(side=tk.LEFT)
-    
-    KnobFrame(
-      self,
-      "Volume",
-      command=self.update_volume,
-      label_format="{:.2f}"
-    ).pack(side=tk.LEFT)
-  
-  def update_phase(self, value):
-    self.oscilator.set_phase(value)
-    self.graph_frame.plot()
-  
-  def update_volume(self, value):
-    self.oscilator.set_volume(value)
-    self.graph_frame.plot()
   
   def update_canvas(self):
     self.graph_frame.update_canvas()
