@@ -40,13 +40,12 @@ class Synth(object):
     self.player        = Player()
     self.sampler       = Sampler(log=self.log)
     self.sample_queue  = EventQueue(2)
+    self.stop          = False
     
     self.player_thread  = threading.Thread(name='SyPlayerT', target=self._continuous_play)
     self.sampler_thread = threading.Thread(name='SySamplerT',target=self._continuous_sample)
     self.queue_thread   = threading.Thread(name='SyQueueT', target=self.process_queue)
 
-    self.stop = False
-    
     self.player_thread.start()
     self.sampler_thread.start()
     self.queue_thread.start()
@@ -69,12 +68,15 @@ class Synth(object):
         t = 0
         with self.sampling_lock:
           self.sampling_lock.wait()
+    
+    self.log.debug("Exited sampler loop.")
 
   def _continuous_play(self):
     while not self.stop:
       try:
-        event = self.sample_queue.get(timeout=1)
+        event  = self.sample_queue.get(timeout=1)
         master = event.item
+        
         self.log.debug(f'Sample Queue Size {self.sample_queue.qsize()}')
         self.player.play_sample(master)
       except Exception as e: pass
