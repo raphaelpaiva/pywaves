@@ -175,12 +175,13 @@ class VisualizationFrame(SynthFrame):
   def plot(self):
     data = self.data() if callable(self.data) else self.data
     
-    data_size = len(data)
-    time_axis = np.arange(data_size)
-    xlimits = (0, data_size)
+    if data is not None:
+      data_size = len(data)
+      time_axis = np.arange(data_size)
+      xlimits = (0, data_size)
 
-    self.line.set_data(time_axis, data)
-    self.ax.set_xlim(xlimits)
+      self.line.set_data(time_axis, data)
+      self.ax.set_xlim(xlimits)
 
   def update_canvas(self):
     try:
