@@ -113,7 +113,7 @@ class App(object):
   
   def _init_synth(self):
     self.synth = Synth(log=self.log)
-    self.synth_queue = self.synth.event_queue
+    self.synth_queue = self.synth.input_queue
 
   def _terminate(self):
     self.log.debug("Terminating app...")

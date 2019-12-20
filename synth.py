@@ -28,7 +28,7 @@ class Synth(object):
     self.note_voice = {}
 
   def _init_queue(self):
-    self.event_queue = EventQueue()
+    self.input_queue = EventQueue()
 
   def _init_generator(self):
     self.oscilators = [
@@ -39,13 +39,14 @@ class Synth(object):
   def _init_sound_engine(self):
     self.player        = Player()
     self.sampler       = Sampler(log=self.log)
-    self.sample_queue  = EventQueue(2)
-    self.stop          = False
+    self.output_queue  = EventQueue(2)
+    self.stop           = False
     
     self.player_thread  = threading.Thread(name='SyPlayerT', target=self._continuous_play)
     self.sampler_thread = threading.Thread(name='SySamplerT',target=self._continuous_sample)
     self.queue_thread   = threading.Thread(name='SyQueueT', target=self.process_queue)
 
+    
     self.player_thread.start()
     self.sampler_thread.start()
     self.queue_thread.start()
@@ -62,7 +63,7 @@ class Synth(object):
 
       if len(master) > 0:
         self.log.debug(f'Putting {len(master)}')
-        self.sample_queue.put(master, 'sample')
+        self.output_queue.put(master, 'sample')
         t += 1
       else:
         t = 0
@@ -74,10 +75,9 @@ class Synth(object):
   def _continuous_play(self):
     while not self.stop:
       try:
-        event  = self.sample_queue.get(timeout=1)
+        event = self.output_queue.get(timeout=1)
         master = event.item
-        
-        self.log.debug(f'Sample Queue Size {self.sample_queue.qsize()}')
+        self.log.debug(f'Sample Queue Size {self.output_queue.qsize()}')
         self.player.play_sample(master)
       except Exception as e: pass
 
@@ -100,7 +100,7 @@ class Synth(object):
     
     if threading.get_ident() != self.queue_thread.ident:
       self.log.debug('Stopping Event Queue Thread...')
-      self.event_queue.put(TERMINATE_EVT)
+      self.input_queue.put(TERMINATE_EVT)
       self.queue_thread.join()
 
   def _evt_note_on(self, item):
@@ -128,7 +128,7 @@ class Synth(object):
 
   def process_queue(self):
     while not self.stop:
-      event = self.event_queue.get() # Blocking
+      event = self.input_queue.get() # Blocking
       self.log.debug(f'Got event {event}')
 
       item = event.item
