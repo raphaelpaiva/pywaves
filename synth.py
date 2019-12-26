@@ -4,6 +4,7 @@ from event_queue import (EventQueue, Event)
 import midi
 import time
 import numpy as np
+from scipy.signal import sawtooth
 import logging
 
 from sinusoud import (Sinusoid, Triangle)
@@ -32,14 +33,14 @@ class Synth(object):
 
   def _init_generator(self):
     self.oscilators = [
-      Oscilator(name="Sinusoid 1", wave=Sinusoid()),
-      Oscilator(name="Triangle 1", wave=Triangle()),
+      Oscilator(name="Sinusoid 1", wave_function=np.sin),
+      Oscilator(name="Triangle 1", wave_function=lambda t: sawtooth(t, width=0.5)),
     ]
 
   def _init_sound_engine(self):
     self.player        = Player()
     self.sampler       = Sampler(log=self.log)
-    self.output_queue  = EventQueue(2)
+    self.output_queue  = EventQueue(1)
     self.stop           = False
     
     self.player_thread  = threading.Thread(name='SyPlayerT', target=self._continuous_play)
@@ -107,8 +108,7 @@ class Synth(object):
     note_number = item.data1
     freq = midi.midi_number_to_freq(note_number)
     
-    waves = [o.wave for o in self.oscilators]
-    voice_index = self.sampler.allocate_voice((waves, freq))
+    voice_index = self.sampler.allocate_voice((self.oscilators, freq))
     with self.sampling_lock:
       self.sampling_lock.notify()
 

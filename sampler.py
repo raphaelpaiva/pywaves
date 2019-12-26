@@ -33,17 +33,17 @@ class Sampler(object):
 
   def sample_waves(self, payload, duration, start_time=0.0):
     samples = []
-    waves, freq = payload
+    oscilators, freq = payload
     
-    for wave in waves:
-      wave.frequency = freq
-      sample = wave.sample(duration, self.sample_rate, start_time)
+    for osc in oscilators:
+      t = np.arange(start_time, start_time + duration, 1/self.sample_rate)
+      sample = osc.evaluate(t, freq)
       samples.append(sample)
     
     return self.mix(samples)
 
   def get_master(self, duration, start_time=0.0):
-    samples = [self.sample_waves(w, duration, start_time) for w in self.voices if w is not None]
+    samples = [self.sample_waves(o, duration, start_time) for o in self.voices if o is not None]
     
     return self.mix(samples)
 

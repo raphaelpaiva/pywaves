@@ -195,31 +195,21 @@ class OscilatorFrame(SynthFrame):
     super().__init__(master, oscilator.name)
     self.oscilator = oscilator
     
-    data_source = lambda: oscilator.wave.sample(vizualization_duration, vizualization_sample_rate)
+    data_source = lambda: oscilator.evaluate(np.arange(0, vizualization_duration, 1/vizualization_sample_rate), 440)
     self.graph_frame = VisualizationFrame(self, data_source)
     self.graph_frame.pack(side=tk.LEFT)
     
-    KnobFrame(
-      self,
-      "Phase",
-      command=self.update_phase,
-      max_value=2 * math.pi,
-      label_format=lambda x: f"{(x/math.pi):.2f}π"
-    ).pack(side=tk.LEFT)
-    
-    KnobFrame(
-      self,
-      "Volume",
-      command=self.update_volume,
-      label_format="{:.2f}"
-    ).pack(side=tk.LEFT)
+    for param in oscilator.parameters.values():
+      KnobFrame(
+        self,
+        param.name,
+        command=param.set_relative,
+        max_value=param.max_value,
+        label_format=param.label_format if param.label_format else "{0:.2f}"
+      ).pack(side=tk.LEFT)
   
-  def update_phase(self, value):
-    self.oscilator.set_phase(value)
-    self.graph_frame.plot()
-  
-  def update_volume(self, value):
-    self.oscilator.set_volume(value)
+  def update(self, value, func):
+    func(value)
     self.graph_frame.plot()
   
   def update_canvas(self):
