@@ -3,14 +3,14 @@ from .parameter import Parameter
 from scipy import signal
 
 class WaveForm(object):
-  def __init__(self, function, params={}):
+  def __init__(self, function, parameters={}):
     super().__init__()
     self.function = function
-    self.params = params
+    self.parameters = parameters
   
   def __call__(self, t):
-    parameters = {k: v.get() if isinstance(v, Parameter) else v for k,v in self.params.items()}
-    return self.function(t, **parameters)
+    parameters_kwargs = {k: v.get() if isinstance(v, Parameter) else v for k,v in self.parameters.items()}
+    return self.function(t, **parameters_kwargs)
 
 
 WAVEFORMS = {
