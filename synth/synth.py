@@ -36,6 +36,7 @@ class Synth(object):
       Oscilator(name="Saw 1", waveform=WAVEFORMS['SAWTOOTH']),
       Oscilator(name="Triangle 1", waveform=WAVEFORMS['TRIANGLE']),
       Oscilator(name="Sinusoid 1", waveform=WAVEFORMS['SINE']),
+      Oscilator(name="Square 1", waveform=WAVEFORMS['SQUARE']),
     ]
 
   def _init_sound_engine(self):

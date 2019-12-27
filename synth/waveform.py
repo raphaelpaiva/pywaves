@@ -16,5 +16,6 @@ class WaveForm(object):
 WAVEFORMS = {
   'SINE': WaveForm(np.sin),
   'TRIANGLE': WaveForm(signal.sawtooth, {'width': 0.5}),
-  'SAWTOOTH': WaveForm(signal.sawtooth, {'width': Parameter(name='width', min_value=0.0, max_value=1.0, init_value=0.0)})
+  'SAWTOOTH': WaveForm(signal.sawtooth, {'width': Parameter(name='width', min_value=0.0, max_value=1.0, init_value=0.0)}),
+  'SQUARE': WaveForm(signal.square, {'duty': Parameter(name='duty cycle', min_value=0.0, max_value=1.0, init_value=0.5)})
 }
