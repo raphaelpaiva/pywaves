@@ -10,6 +10,7 @@ import logging
 from .oscilator import Oscilator
 from .player import Player
 from .sampler import Sampler
+from .waveform import WAVEFORMS
 
 LOGGER_NAME = 'Synth'
 
@@ -32,9 +33,9 @@ class Synth(object):
 
   def _init_generator(self):
     self.oscilators = [
-      Oscilator(name="Sinusoid 1", wave_function=np.sin),
-      Oscilator(name="Triangle 1", wave_function=lambda t: sawtooth(t, width=0.5)),
-      Oscilator(name="Saw 1", wave_function=sawtooth)
+      Oscilator(name="Saw 1", waveform=WAVEFORMS['SAWTOOTH']),
+      Oscilator(name="Triangle 1", waveform=WAVEFORMS['TRIANGLE']),
+      Oscilator(name="Sinusoid 1", waveform=WAVEFORMS['SINE']),
     ]
 
   def _init_sound_engine(self):
