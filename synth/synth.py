@@ -1,16 +1,15 @@
 import threading
 import copy
-from event_queue import (EventQueue, Event)
+from .event_queue import (EventQueue, Event)
 import midi
 import time
 import numpy as np
 from scipy.signal import sawtooth
 import logging
 
-from sinusoud import (Sinusoid, Triangle)
-from oscilator import Oscilator
-from player import Player
-from sampler import Sampler
+from .oscilator import Oscilator
+from .player import Player
+from .sampler import Sampler
 
 LOGGER_NAME = 'Synth'
 
@@ -35,6 +34,7 @@ class Synth(object):
     self.oscilators = [
       Oscilator(name="Sinusoid 1", wave_function=np.sin),
       Oscilator(name="Triangle 1", wave_function=lambda t: sawtooth(t, width=0.5)),
+      Oscilator(name="Saw 1", wave_function=sawtooth)
     ]
 
   def _init_sound_engine(self):

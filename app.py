@@ -6,7 +6,7 @@ import midi
 
 from interface import (CLInterface, TkInterface)
 from input.keyboardInput import (KeyboardInput, EVT_KEY, EVT_KEY_PRESSED, EVT_KEY_RELEASED)
-from event_queue import (EventQueue, Event)
+from synth import (EventQueue, Event)
 from synth import Synth
 
 LOGGER_NAME = 'app'
