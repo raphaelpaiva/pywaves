@@ -220,16 +220,16 @@ class OscilatorFrame(SynthFrame):
         label_format=param.label_format if param.label_format else "{0:.2f}"
       ).pack(side=tk.LEFT)
 
-      for param in oscilator.waveform.parameters.values():
-        if not isinstance(param, float):
-          KnobFrame(
-            self,
-            param.name,
-            command=[param.set_relative, lambda v: self.graph_frame.plot()],
-            max_value=param.max_value,
-            min_value=param.min_value,
-            label_format=param.label_format if param.label_format else "{0:.2f}"
-          ).pack(side=tk.LEFT)
+    for wave_param in oscilator.waveform.parameters.values():
+      if not isinstance(wave_param, float):
+        KnobFrame(
+          self,
+          wave_param.name,
+          command=[wave_param.set_relative, lambda v: self.graph_frame.plot()],
+          max_value=wave_param.max_value,
+          min_value=wave_param.min_value,
+          label_format=wave_param.label_format if wave_param.label_format else "{0:.2f}"
+        ).pack(side=tk.LEFT)
   
   def update(self, value, func):
     func(value)
