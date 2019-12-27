@@ -1,8 +1,6 @@
 #!/usr/bin/python
 import math
 
-from sinusoud import Sinusoid
-
 class BaseOscilator(object):
   def __init__(self, wave_function, name="OSC"):
     super().__init__()
@@ -13,16 +11,20 @@ class BaseOscilator(object):
 class Oscilator(BaseOscilator):
   def __init__(self, wave_function, name='OSC'):
     super().__init__(wave_function, name=name)
+    self.volume = Parameter('volume')
+    self.detune = Parameter('detune', min_value=-12, max_value=12)
+    self.phase  = Parameter('phase', max_value=2 * math.pi, label_format=lambda x: f"{(x/math.pi):.2f}π")
+    
     self.parameters = {
-      'volume': Parameter('volume'),
-      'detune': Parameter('detune', min_value=-12, max_value=12),
-      'phase': Parameter('phase', max_value=2 * math.pi, label_format=lambda x: f"{(x/math.pi):.2f}π"),
+      'volume': self.volume,
+      'detune': self.detune,
+      'phase': self.phase
     }
   
   def evaluate(self, t, freq):
-    detune = self.parameters['detune'].get()
-    phase = self.parameters['phase'].get()
-    amplitude = self.parameters['volume'].get()
+    detune = self.detune.get()
+    phase = self.phase.get()
+    amplitude = self.volume.get()
     
     return amplitude * self.wave_function(2 * math.pi * (freq + detune) * t + phase)
 class Parameter(object):
@@ -33,9 +35,9 @@ class Parameter(object):
     self.name = name
     
     self.relative_value = init_value
-    self.max_value = max_value
-    self.min_value = min_value
-    self.label_format = label_format
+    self.max_value      = max_value
+    self.min_value      = min_value
+    self.label_format   = label_format
 
   def get(self):
     """ Returns the absolute value of this parameter, based on the minimum and maximum values. """
