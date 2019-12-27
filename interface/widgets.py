@@ -92,7 +92,11 @@ class Knob(tk.Frame):
     self.value = new_value
     
     if self.command:
-      self.command(self.value)
+      if isinstance(self.command, list):
+        for cmd in self.command:
+          cmd(self.value)
+      elif callable(self.command):
+        self.command(self.value)
 
   def _release(self, event):
     self.last_mouse_y = None
@@ -111,7 +115,7 @@ class SynthFrame(ttk.LabelFrame):
     )
 
 class KnobFrame(SynthFrame):
-  def __init__(self, master, name="Knob", command=None, max_value=1.0, label_format=None, invert_value=True):
+  def __init__(self, master, name="Knob", command=None, max_value=1.0, min_value=0.0, label_format=None, invert_value=True):
     super().__init__(
       master,
       name
@@ -119,6 +123,7 @@ class KnobFrame(SynthFrame):
 
     self.command = command
     self.max_value = max_value
+    self.min_value = min_value
     self.label_format = label_format
     self.invert_value = invert_value
     
@@ -136,19 +141,25 @@ class KnobFrame(SynthFrame):
 
   def _update_value(self, knob_value):
     if self.invert_value:
-      value = (1.0 - knob_value) * self.max_value
+      value = (1.0 - knob_value)
     else:
-      value = knob_value * self.max_value
+      value = knob_value
     
-    self.command(value)
+    if self.command:
+      if isinstance(self.command, list):
+        for cmd in self.command:
+          cmd(value)
+      elif callable(self.command):
+        self.command(value)
     
-    lbl_val = value
+    real_val = value * (self.max_value - self.min_value) + self.min_value
+    lbl_val = real_val
     
     if self.label_format is not None:
       if callable(self.label_format):
-        lbl_val = self.label_format(value)
+        lbl_val = self.label_format(real_val)
       elif isinstance(self.label_format, str):
-        lbl_val = self.label_format.format(value)
+        lbl_val = self.label_format.format(real_val)
 
     self.text_var.set(lbl_val)
 
@@ -203,8 +214,9 @@ class OscilatorFrame(SynthFrame):
       KnobFrame(
         self,
         param.name,
-        command=param.set_relative,
+        command=[param.set_relative, lambda v: self.graph_frame.plot()],
         max_value=param.max_value,
+        min_value=param.min_value,
         label_format=param.label_format if param.label_format else "{0:.2f}"
       ).pack(side=tk.LEFT)
   
