@@ -39,6 +39,8 @@ class Window(Frame):
     self.pack()
 
   def _create_master(self):
+    output_device = self.player.get_output_device()
+    
     master_frame = LabelFrame(
       self,
       text="Master",
@@ -65,17 +67,27 @@ class Window(Frame):
 
     Label(
       master_frame,
+      text=f"Device: {output_device['name']}"
+    ).pack()
+
+    Label(
+      master_frame,
       text=f"Channels: {self.player.channels}"
     ).pack()
 
     Label(
       master_frame,
-      text=f"Sample Size: {self.player.sample_size}"
+      text=f"Sample Rate: {output_device['default_samplerate']}Hz"
     ).pack()
 
     Label(
       master_frame,
-      text=f"Sample Rate: {self.player.sample_rate}Hz"
+      text=f"Block Size: {self.player.stream.blocksize}"
+    ).pack()
+
+    Label(
+      master_frame,
+      text=f"Latency: {self.player.stream.latency * 1000}ms"
     ).pack()
 
     graph_frame = self._create_graph_frame(master_frame, lambda: self.player.master_sample)
