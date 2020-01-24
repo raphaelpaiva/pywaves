@@ -25,3 +25,18 @@ class Parameter(object):
       self.relative_value = 1.0
     else:
       self.relative_value = new_value
+
+class ChoiceParameter(object):
+  def __init__(self, name, choices = []):
+    super().__init__()
+    self.choices = choices
+    self.choice = 0
+    
+  def set_relative(self, value):
+    self.choice = value
+  
+  def get(self):
+    return self.choices[self.choice]
+  
+  def get_relative(self):
+    return self.choice

@@ -16,6 +16,8 @@ class Module(object):
   
   def start(self): pass
 
+  def run(self): pass
+
   def stop(self):
     self.do_stop = True
 
